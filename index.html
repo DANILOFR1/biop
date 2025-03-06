@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Coleta de Dados Biológicos</title>
+    <title>BioPlan</title>
     <!-- SheetJS para exportação em Excel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
@@ -24,11 +24,39 @@
             margin-bottom: 15px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
-        .header {
-            font-weight: bold;
+        .card-collapsible {
+            margin-bottom: 5px;
+        }
+        .card-content {
+            display: none;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 0 0 8px 8px;
+            margin-top: -5px;
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .card-header:hover {
+            background-color: #f8f9fa;
+        }
+        .card-header h3 {
+            margin: 0;
+            font-size: 16px;
+        }
+        .section-title {
+            font-size: 18px;
+            color: #333;
             margin-bottom: 15px;
             padding-bottom: 8px;
-            border-bottom: 1px solid #eee;
+            border-bottom: 2px solid #4285f4;
         }
         input, textarea, select {
             width: 100%;
@@ -146,33 +174,217 @@
             border-radius: 4px;
             margin-bottom: 10px;
             font-size: 12px;
-            max-height: 100px;
+            max-height: 150px;
             overflow-y: auto;
+            border: 1px solid #ffd54f;
+        }
+        .install-button {
+            display: none;
+            position: fixed;
+            bottom: 70px; /* Ajustado para dar espaço ao footer */
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            padding: 10px 20px;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 1000;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+            margin-top: 5px;
+        }
+        .action-buttons button {
+            padding: 3px 8px;
+            font-size: 12px;
+            margin-bottom: 0;
+        }
+        .edit-mode {
+            background-color: #fff3e0;
+            border: 1px dashed #ff9800;
+        }
+        .species-select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .species-manager {
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: #f0f8ff;
+            border-radius: 4px;
+            display: none;
+        }
+        .species-list {
+            margin: 10px 0;
+            max-height: 150px;
+            overflow-y: auto;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            padding: 5px;
+            background-color: white;
+        }
+        .species-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px;
+            border-bottom: 1px solid #eee;
+        }
+        .import-section {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #cce5ff;
+        }
+        .import-area {
+            background-color: white;
+            border: 1px solid #cce5ff;
+            border-radius: 4px;
+            padding: 10px;
+            margin-top: 10px;
+        }
+        .file-input-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .file-input-container input[type="file"] {
+            padding: 8px;
+            border: 1px dashed #4285f4;
+            border-radius: 4px;
+            background-color: #f8f9fa;
+        }
+        .species-select-container {
+            position: relative;
+            margin-bottom: 10px;
+        }
+        .species-input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .species-suggestions {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 0 0 4px 4px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .species-suggestion {
+            padding: 8px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+        }
+        .species-suggestion:hover {
+            background-color: #f5f5f5;
+        }
+        .species-suggestion.selected {
+            background-color: #e3f2fd;
+        }
+        .highlight {
+            background-color: #fff9c4;
+            padding: 0 2px;
+        }
+        .footer {
+            margin-top: 30px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            font-size: 12px;
+            color: #666;
+            text-align: center;
+        }
+        .footer p {
+            margin: 5px 0;
+        }
+        .footer .citation {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #ddd;
+        }
+        .footer .donation {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #e8f5e9;
+            border-radius: 4px;
+        }
+        .footer .pix-key {
+            font-family: monospace;
+            background-color: #fff;
+            padding: 5px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            display: inline-block;
+            margin-top: 5px;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Coleta de Dados Biológicos</h1>
+        <h1>BioPlan</h1>
         
         <div id="status" class="status"></div>
         
         <!-- Projetos -->
         <div class="card">
-            <div class="header">Projetos</div>
+            <div class="section-title">Projetos</div>
             <input type="text" id="projectName" placeholder="Nome do novo projeto">
             <button id="createBtn">Criar Projeto</button>
             <select id="projectSelect">
                 <option value="">Selecione um projeto</option>
             </select>
+            <button id="deleteProjectBtn" class="red-btn">Excluir Projeto</button>
         </div>
 
         <!-- Coleta -->
         <div class="card">
-            <div class="header">Coleta de Dados</div>
+            <div class="section-title">Coleta de Dados</div>
+            <label>Espécie:</label>
+            <div class="species-select-container">
+                <input type="text" id="speciesInput" class="species-input" placeholder="Digite para buscar espécies...">
+                <div id="speciesSuggestions" class="species-suggestions"></div>
+            </div>
+            <label>Abundância:</label>
+            <input type="number" id="abundance" placeholder="Quantidade">
             <label>Observação:</label>
             <textarea id="notes" rows="3"></textarea>
             <button id="locationBtn" class="green-btn">Capturar Localização</button>
+            <button id="googleMapsBtn" class="green-btn">Localização via Google Maps</button>
+            <div id="mapsContainer" class="maps-container">
+                <div class="maps-info">
+                    <p><strong>Para obter coordenadas do Google Maps:</strong></p>
+                    <ol>
+                        <li>Abra o <a href="https://maps.google.com" target="_blank">Google Maps</a></li>
+                        <li>Navegue até o local desejado</li>
+                        <li>Clique e segure na localização para obter as coordenadas</li>
+                        <li>Copie as coordenadas e insira-as abaixo</li>
+                    </ol>
+                </div>
+                <div class="coord-input">
+                    <input type="number" id="mapsLatInput" placeholder="Latitude" step="0.000001">
+                    <input type="number" id="mapsLngInput" placeholder="Longitude" step="0.000001">
+                </div>
+                <div class="maps-buttons">
+                    <button id="saveMapsCoords" class="green-btn">Salvar Coordenadas</button>
+                    <button id="closeMapsBtn" class="red-btn">Cancelar</button>
+                </div>
+            </div>
             <div id="diagnostic" class="diagnostic"></div>
             
             <div id="locationHelp" class="location-help">
@@ -203,13 +415,108 @@
             <button id="saveBtn">Salvar Dados</button>
         </div>
 
-        <!-- Dados -->
-        <div class="card">
-            <div class="flex header">
-                <span>Dados Coletados</span>
-                <button id="exportBtn" class="green-btn export-btn">Exportar Excel</button>
+        <!-- Gerenciamento -->
+        <div class="card-collapsible">
+            <div class="card-header" onclick="toggleCard('speciesCard')">
+                <h3>Gerenciar Espécies</h3>
+                <button class="orange-btn export-btn">Mostrar/Ocultar</button>
             </div>
-            <div id="dataList"></div>
+            <div id="speciesCard" class="card-content">
+                <!-- Adicionar espécies manualmente -->
+                <div class="manual-add-section">
+                    <h4 style="margin: 0 0 10px 0;">Adicionar Espécie</h4>
+                    <input type="text" id="newSpecies" placeholder="Nome da nova espécie">
+                    <button id="addSpeciesBtn" class="green-btn">Adicionar Espécie</button>
+                </div>
+
+                <!-- Lista de espécies -->
+                <div class="species-list" id="speciesList">
+                    <!-- Espécies serão adicionadas aqui -->
+                </div>
+
+                <!-- Seção de importação -->
+                <div class="import-section">
+                    <h4 style="margin: 10px 0;">Importar Espécies</h4>
+                    <div class="import-area">
+                        <p class="helper-text">Selecione um arquivo Excel (.xlsx, .xls), CSV ou TXT com nomes de espécies (um por linha).</p>
+                        <div class="file-input-container">
+                            <input type="file" id="importExcel" accept=".xlsx, .xls, .csv, .txt">
+                            <button id="importExcelBtn" class="green-btn">Importar Espécies</button>
+                        </div>
+                        <button id="testXLSXBtn" class="orange-btn" style="margin-top: 5px;">Verificar Biblioteca XLSX</button>
+                        <div id="importDiagnostic" class="diagnostic"></div>
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <button id="importTxtBtn" class="orange-btn">Importar de TXT (Método Alternativo)</button>
+                        <p class="helper-text">Use esta opção se a importação normal não funcionar.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dados Coletados -->
+        <div class="card-collapsible">
+            <div class="card-header" onclick="toggleCard('dataCard')">
+                <h3>Dados Coletados</h3>
+                <div>
+                    <button id="exportBtn" class="green-btn export-btn">Exportar Excel</button>
+                    <button class="orange-btn export-btn">Mostrar/Ocultar</button>
+                </div>
+            </div>
+            <div id="dataCard" class="card-content">
+                <div id="dataList"></div>
+            </div>
+        </div>
+
+        <!-- Adicionar botão de instalação -->
+        <button id="installButton" class="install-button">Instalar Aplicativo</button>
+
+        <!-- Footer -->
+        <div class="footer">
+            <div class="citation">
+                <p><strong>Citar como:</strong></p>
+                <p>RANGEL, Danilo Freitas. WebApp BioPlan. 2025. Disponível em: &lt;https://danilofr1.github.io/biop/&gt;. Acesso em: DATA MES. ANO.</p>
+            </div>
+            <div class="donation">
+                <p><strong>Se o App foi útil para você, faça uma doação por Pix:</strong></p>
+                <p>Chave aleatória: <span class="pix-key">3c37c492-cebe-4927-b7db-68b004b67c99</span></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de edição -->
+    <div id="editModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.5); z-index: 1000;">
+        <div style="background: white; max-width: 90%; width: 500px; margin: 20px auto; padding: 20px; border-radius: 8px; max-height: 90vh; overflow-y: auto;">
+            <h3 style="margin-top: 0;">Editar Registro</h3>
+            
+            <div style="margin-bottom: 15px;">
+                <label>Espécie:</label>
+                <select id="editSpecies" class="species-select">
+                    <option value="">Selecione uma espécie</option>
+                    <!-- Espécies pré-programadas serão adicionadas aqui -->
+                </select>
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label>Abundância:</label>
+                <input type="number" id="editAbundance" placeholder="Quantidade">
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label>Observação:</label>
+                <textarea id="editNotes" rows="3" style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ddd; border-radius: 4px;"></textarea>
+            </div>
+            
+            <div style="margin-bottom: 15px;">
+                <label>Coordenadas:</label>
+                <div style="display: flex; gap: 10px; margin-top: 5px;">
+                    <input type="number" id="editLat" placeholder="Latitude" step="0.000001" style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    <input type="number" id="editLng" placeholder="Longitude" step="0.000001" style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+            </div>
+            
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button id="cancelEditBtn" style="background-color: #9e9e9e; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer;">Cancelar</button>
+                <button id="saveEditBtn" style="background-color: #0f9d58; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer;">Salvar Alterações</button>
+            </div>
         </div>
     </div>
 
@@ -220,13 +527,21 @@
         var currentLocation = null;
         var watchId = null;
         var locationUpdateCount = 0;
+        var speciesList = []; // Será preenchido a partir do localStorage
 
         // Elementos 
         var statusEl = document.getElementById("status");
         var projectNameEl = document.getElementById("projectName");
         var projectSelectEl = document.getElementById("projectSelect");
         var createBtnEl = document.getElementById("createBtn");
+        var deleteProjectBtnEl = document.getElementById("deleteProjectBtn");
         var locationBtnEl = document.getElementById("locationBtn");
+        var googleMapsBtnEl = document.getElementById("googleMapsBtn");
+        var mapsContainerEl = document.getElementById("mapsContainer");
+        var mapsLatInputEl = document.getElementById("mapsLatInput");
+        var mapsLngInputEl = document.getElementById("mapsLngInput");
+        var saveMapsCoordsEl = document.getElementById("saveMapsCoords");
+        var closeMapsBtn = document.getElementById("closeMapsBtn");
         var diagnosticEl = document.getElementById("diagnostic");
         var locationHelpEl = document.getElementById("locationHelp");
         var tryAgainBtnEl = document.getElementById("tryAgainBtn");
@@ -237,10 +552,25 @@
         var latInputEl = document.getElementById("latInput");
         var lngInputEl = document.getElementById("lngInput");
         var saveCoordsEl = document.getElementById("saveCoords");
+        var speciesSelectEl = document.getElementById("speciesSelect");
+        var abundanceEl = document.getElementById("abundance");
         var notesEl = document.getElementById("notes");
         var saveBtnEl = document.getElementById("saveBtn");
         var exportBtnEl = document.getElementById("exportBtn");
         var dataListEl = document.getElementById("dataList");
+        var speciesManagerEl = document.getElementById("speciesManager");
+        var newSpeciesEl = document.getElementById("newSpecies");
+        var addSpeciesBtnEl = document.getElementById("addSpeciesBtn");
+        var speciesListEl = document.getElementById("speciesList");
+        var importExcelEl = document.getElementById("importExcel");
+        var importExcelBtnEl = document.getElementById("importExcelBtn");
+        var testXLSXBtnEl = document.getElementById("testXLSXBtn");
+        var importTxtBtnEl = document.getElementById("importTxtBtn");
+
+        // Elementos adicionados para autocomplete
+        var speciesInputEl = document.getElementById("speciesInput");
+        var speciesSuggestionsEl = document.getElementById("speciesSuggestions");
+        var selectedSpecies = "";
 
         // Inicialização
         function init() {
@@ -260,10 +590,19 @@
                 showStatus("ERRO ao carregar dados: " + e.message);
             }
             
+            // Carregar espécies
+            loadSpecies();
+            
             // Configurar eventos
             createBtnEl.onclick = createProject;
+            deleteProjectBtnEl.onclick = deleteProject;
             projectSelectEl.onchange = loadProject;
             locationBtnEl.onclick = captureLocation;
+            googleMapsBtnEl.onclick = toggleGoogleMaps;
+            saveMapsCoordsEl.onclick = saveMapsCoords;
+            closeMapsBtn.onclick = function() {
+                mapsContainerEl.style.display = "none";
+            };
             tryAgainBtnEl.onclick = function() {
                 locationHelpEl.style.display = "none";
                 captureLocation();
@@ -280,37 +619,488 @@
             saveBtnEl.onclick = saveData;
             exportBtnEl.onclick = exportExcel;
             
+            // Eventos de gerenciamento de espécies
+            if (addSpeciesBtnEl) {
+                addSpeciesBtnEl.onclick = addSpecies;
+            }
+            
+            // Eventos do modal de edição
+            var saveEditBtn = document.getElementById('saveEditBtn');
+            var cancelEditBtn = document.getElementById('cancelEditBtn');
+            if (saveEditBtn) {
+                saveEditBtn.addEventListener('click', saveEdit);
+            }
+            if (cancelEditBtn) {
+                cancelEditBtn.addEventListener('click', function() {
+                    var editModal = document.getElementById('editModal');
+                    if (editModal) {
+                        editModal.style.display = 'none';
+                    }
+                });
+            }
+            
             // Verificar suporte à geolocalização
             checkGeolocationSupport();
-        }
-        
-        // Verificar suporte à geolocalização
-        function checkGeolocationSupport() {
-            if (navigator.geolocation) {
-                logDiagnostic("Geolocalização disponível");
-                // Pré-verificar permissão (se disponível no navegador)
-                if (navigator.permissions && navigator.permissions.query) {
-                    navigator.permissions.query({ name: 'geolocation' })
-                        .then(function(result) {
-                            logDiagnostic("Estado da permissão: " + result.state);
-                            if (result.state === 'denied') {
-                                showStatus("Permissão de localização negada");
-                                setTimeout(function() {
-                                    locationHelpEl.style.display = "block";
-                                }, 1500);
-                            }
-                        }).catch(function(err) {
-                            logDiagnostic("Erro ao verificar permissão: " + err.message);
-                        });
+            
+            // Verificar compatibilidade PWA e mostrar botão de instalação manual
+            checkPWACompatibility();
+
+            // Evento para importar espécies de Excel/CSV/TXT
+            importExcelBtnEl.onclick = function() {
+                // Limpar mensagens anteriores
+                var importDiagnosticEl = document.getElementById('importDiagnostic');
+                importDiagnosticEl.innerHTML = "";
+                importDiagnosticEl.style.display = "block";
+                
+                logImportDiagnostic("Iniciando importação de espécies");
+                
+                // Verificar se um arquivo foi selecionado
+                var fileInput = document.getElementById('importExcel');
+                if (!fileInput.files.length) {
+                    showStatus("Selecione um arquivo primeiro");
+                    logImportDiagnostic("Nenhum arquivo selecionado");
+                    return;
                 }
-            } else {
-                showStatus("Seu navegador não suporta geolocalização");
-                logDiagnostic("Geolocalização não suportada");
-                setTimeout(function() {
-                    manualCoordsEl.style.display = "block";
-                    manualBtnEl.textContent = "Ocultar Entrada Manual";
-                }, 1500);
+                
+                var file = fileInput.files[0];
+                logImportDiagnostic("Arquivo selecionado: " + file.name);
+                showStatus("Processando arquivo " + file.name + "...");
+                
+                // Determinar tipo de arquivo
+                var fileName = file.name.toLowerCase();
+                var isCSV = fileName.endsWith('.csv');
+                var isTXT = fileName.endsWith('.txt');
+                var isExcel = fileName.endsWith('.xlsx') || fileName.endsWith('.xls');
+                
+                logImportDiagnostic("Tipo de arquivo: " + (isExcel ? "Excel" : (isCSV ? "CSV" : "TXT")));
+                
+                var reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    try {
+                        logImportDiagnostic("Arquivo lido com sucesso");
+                        
+                        var speciesData = [];
+                        
+                        if (isCSV || isTXT) {
+                            // Processar CSV ou TXT (ambos são tratados como texto)
+                            var content = e.target.result;
+                            var lines = content.split(/\r?\n/); // Suporta quebras de linha Windows e Unix
+                            logImportDiagnostic("Linhas encontradas: " + lines.length);
+                            
+                            for (var i = 0; i < lines.length; i++) {
+                                var line = lines[i].trim();
+                                if (line) {
+                                    if (isCSV) {
+                                        // Para CSV, pegamos apenas a primeira coluna
+                                        var parts = line.split(',');
+                                        if (parts.length > 0 && parts[0].trim()) {
+                                            speciesData.push(parts[0].trim());
+                                        }
+                                    } else {
+                                        // Para TXT, cada linha é uma espécie
+                                        speciesData.push(line);
+                                    }
+                                }
+                            }
+                        } else if (isExcel) {
+                            // Verificar se a biblioteca SheetJS está disponível
+                            if (typeof XLSX === 'undefined') {
+                                throw new Error("Biblioteca XLSX não disponível. Tente usar um arquivo CSV ou TXT.");
+                            }
+                            
+                            // Processar Excel
+                            var data = new Uint8Array(e.target.result);
+                            logImportDiagnostic("Lendo arquivo Excel...");
+                            
+                            try {
+                                var workbook = XLSX.read(data, {type: 'array'});
+                                logImportDiagnostic("Workbook lido com sucesso");
+                                
+                                if (!workbook || !workbook.SheetNames || workbook.SheetNames.length === 0) {
+                                    throw new Error("Arquivo Excel inválido ou vazio");
+                                }
+                                
+                                var sheetName = workbook.SheetNames[0];
+                                logImportDiagnostic("Lendo planilha: " + sheetName);
+                                
+                                var worksheet = workbook.Sheets[sheetName];
+                                var jsonData = XLSX.utils.sheet_to_json(worksheet, {header: 1});
+                                
+                                logImportDiagnostic("Dados extraídos: " + jsonData.length + " linhas");
+                                
+                                // Extrair primeira coluna de cada linha
+                                for (var i = 0; i < jsonData.length; i++) {
+                                    var row = jsonData[i];
+                                    if (row && row.length > 0 && row[0] !== undefined && row[0] !== null) {
+                                        var speciesName = row[0].toString().trim();
+                                        if (speciesName) {
+                                            speciesData.push(speciesName);
+                                        }
+                                    }
+                                }
+                            } catch (excelError) {
+                                logImportDiagnostic("Erro ao processar Excel: " + excelError.message);
+                                throw new Error("Erro ao processar arquivo Excel: " + excelError.message);
+                            }
+                        } else {
+                            throw new Error("Formato de arquivo não suportado. Use Excel, CSV ou TXT.");
+                        }
+                        
+                        // Verificar se temos dados
+                        if (speciesData.length === 0) {
+                            throw new Error("Nenhuma espécie encontrada no arquivo");
+                        }
+                        
+                        logImportDiagnostic("Espécies encontradas: " + speciesData.length);
+                        
+                        // Adicionar espécies à lista
+                        var addedCount = 0;
+                        var duplicateCount = 0;
+                        
+                        for (var i = 0; i < speciesData.length; i++) {
+                            var speciesName = speciesData[i];
+                            
+                            if (!speciesList.includes(speciesName)) {
+                                speciesList.push(speciesName);
+                                logImportDiagnostic("Espécie adicionada: " + speciesName);
+                                addedCount++;
+                            } else {
+                                logImportDiagnostic("Espécie duplicada ignorada: " + speciesName);
+                                duplicateCount++;
+                            }
+                        }
+                        
+                        // Salvar e atualizar a interface
+                        window.localStorage.setItem("bioSpecies", JSON.stringify(speciesList));
+                        updateSpeciesList();
+                        populateSpeciesDropdowns();
+                        
+                        // Mostrar resultado
+                        var message = "Importação concluída: " + addedCount + " espécies adicionadas";
+                        if (duplicateCount > 0) {
+                            message += ", " + duplicateCount + " duplicadas ignoradas";
+                        }
+                        
+                        showStatus(message);
+                        logImportDiagnostic("SUCESSO: " + message);
+                        
+                        // Limpar o campo de arquivo
+                        fileInput.value = "";
+                        
+                    } catch (error) {
+                        logImportDiagnostic("ERRO: " + error.message);
+                        showStatus("ERRO ao processar arquivo: " + error.message);
+                    }
+                };
+                
+                reader.onerror = function() {
+                    logImportDiagnostic("ERRO ao ler o arquivo");
+                    showStatus("ERRO ao ler o arquivo");
+                };
+                
+                // Ler o arquivo no formato adequado
+                if (isCSV || isTXT) {
+                    reader.readAsText(file);
+                } else {
+                    reader.readAsArrayBuffer(file);
+                }
+            };
+
+            // Adicionar evento para testar a biblioteca XLSX
+            testXLSXBtnEl.addEventListener('click', function() {
+                var importDiagnosticEl = document.getElementById('importDiagnostic');
+                importDiagnosticEl.innerHTML = "";
+                importDiagnosticEl.style.display = "block";
+                
+                if (typeof XLSX === 'undefined') {
+                    logImportDiagnostic("ERRO: Biblioteca XLSX não está disponível!");
+                    showStatus("ERRO: Biblioteca XLSX não está disponível!");
+                } else {
+                    logImportDiagnostic("SUCESSO: Biblioteca XLSX está disponível (versão: " + (XLSX.version || "desconhecida") + ")");
+                    showStatus("Biblioteca XLSX está disponível!");
+                    
+                    // Criar um workbook simples para testar
+                    try {
+                        var wb = XLSX.utils.book_new();
+                        var ws = XLSX.utils.aoa_to_sheet([["Teste"]]);
+                        XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+                        logImportDiagnostic("SUCESSO: Teste de criação de workbook funcionou!");
+                    } catch (e) {
+                        logImportDiagnostic("ERRO ao testar workbook: " + e.message);
+                    }
+                }
+            });
+
+            // Adicionar evento para importação simplificada de TXT
+            importTxtBtnEl.addEventListener('click', function() {
+                var importDiagnosticEl = document.getElementById('importDiagnostic');
+                importDiagnosticEl.innerHTML = "";
+                importDiagnosticEl.style.display = "block";
+                
+                var fileInput = document.getElementById('importExcel');
+                if (!fileInput.files.length) {
+                    showStatus("Selecione um arquivo TXT primeiro");
+                    logImportDiagnostic("Nenhum arquivo selecionado");
+                    return;
+                }
+                
+                var file = fileInput.files[0];
+                var fileName = file.name.toLowerCase();
+                
+                if (!fileName.endsWith('.txt') && !fileName.endsWith('.csv')) {
+                    showStatus("Por favor, selecione um arquivo TXT ou CSV para este método");
+                    logImportDiagnostic("Arquivo inválido para importação simplificada: " + fileName);
+                    return;
+                }
+                
+                logImportDiagnostic("Iniciando importação simplificada de: " + file.name);
+                
+                var reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    try {
+                        var content = e.target.result;
+                        var lines = content.split(/\r?\n/);
+                        var validLines = [];
+                        
+                        // Filtrar linhas vazias
+                        for (var i = 0; i < lines.length; i++) {
+                            var line = lines[i].trim();
+                            if (line) {
+                                if (fileName.endsWith('.csv')) {
+                                    // Para CSV, pegamos apenas a primeira coluna
+                                    var parts = line.split(',');
+                                    if (parts.length > 0 && parts[0].trim()) {
+                                        validLines.push(parts[0].trim());
+                                    }
+                                } else {
+                                    // Para TXT, cada linha é uma espécie
+                                    validLines.push(line);
+                                }
+                            }
+                        }
+                        
+                        if (validLines.length === 0) {
+                            throw new Error("Nenhuma espécie encontrada no arquivo");
+                        }
+                        
+                        logImportDiagnostic("Espécies encontradas: " + validLines.length);
+                        
+                        // Adicionar espécies à lista
+                        var addedCount = 0;
+                        var duplicateCount = 0;
+                        
+                        for (var i = 0; i < validLines.length; i++) {
+                            var speciesName = validLines[i];
+                            
+                            if (!speciesList.includes(speciesName)) {
+                                speciesList.push(speciesName);
+                                logImportDiagnostic("Espécie adicionada: " + speciesName);
+                                addedCount++;
+                            } else {
+                                logImportDiagnostic("Espécie duplicada ignorada: " + speciesName);
+                                duplicateCount++;
+                            }
+                        }
+                        
+                        // Salvar e atualizar a interface
+                        window.localStorage.setItem("bioSpecies", JSON.stringify(speciesList));
+                        updateSpeciesList();
+                        populateSpeciesDropdowns();
+                        
+                        // Mostrar resultado
+                        var message = "Importação concluída: " + addedCount + " espécies adicionadas";
+                        if (duplicateCount > 0) {
+                            message += ", " + duplicateCount + " duplicadas ignoradas";
+                        }
+                        
+                        showStatus(message);
+                        logImportDiagnostic("SUCESSO: " + message);
+                        
+                        // Limpar o campo de arquivo
+                        fileInput.value = "";
+                        
+                    } catch (error) {
+                        logImportDiagnostic("ERRO: " + error.message);
+                        showStatus("ERRO ao processar arquivo: " + error.message);
+                    }
+                };
+                
+                reader.onerror = function() {
+                    logImportDiagnostic("ERRO ao ler o arquivo");
+                    showStatus("ERRO ao ler o arquivo");
+                };
+                
+                reader.readAsText(file);
+            });
+
+            // Função para inicializar o autocomplete
+            initAutocomplete();
+        }
+
+        // Carregar espécies do localStorage
+        function loadSpecies() {
+            try {
+                var savedSpecies = window.localStorage.getItem("bioSpecies");
+                if (savedSpecies) {
+                    speciesList = JSON.parse(savedSpecies);
+                } else {
+                    // Espécies padrão se não houver nenhuma salva
+                    speciesList = ["Espécie A", "Espécie B", "Espécie C"];
+                    window.localStorage.setItem("bioSpecies", JSON.stringify(speciesList));
+                }
+                updateSpeciesList();
+                populateSpeciesDropdowns();
+            } catch (e) {
+                console.error("Erro ao carregar espécies:", e);
+                logDiagnostic("Erro ao carregar espécies: " + e.message);
             }
+        }
+
+        // Alternar exibição do gerenciador de espécies
+        function toggleSpeciesManager() {
+            if (speciesManagerEl.style.display === "block") {
+                speciesManagerEl.style.display = "none";
+                toggleSpeciesBtnEl.textContent = "Mostrar";
+            } else {
+                speciesManagerEl.style.display = "block";
+                toggleSpeciesBtnEl.textContent = "Ocultar";
+            }
+        }
+
+        // Adicionar nova espécie
+        function addSpecies() {
+            var newSpeciesName = newSpeciesEl.value.trim();
+            
+            if (!newSpeciesName) {
+                showStatus("Digite um nome para a espécie");
+                return;
+            }
+            
+            if (speciesList.includes(newSpeciesName)) {
+                showStatus("Esta espécie já existe");
+                return;
+            }
+            
+            speciesList.push(newSpeciesName);
+            window.localStorage.setItem("bioSpecies", JSON.stringify(speciesList));
+            
+            newSpeciesEl.value = "";
+            updateSpeciesList();
+            populateSpeciesDropdowns();
+            
+            showStatus("Espécie adicionada com sucesso!");
+        }
+
+        // Remover espécie
+        function removeSpecies(speciesName) {
+            var index = speciesList.indexOf(speciesName);
+            if (index !== -1) {
+                if (confirm("Tem certeza que deseja remover a espécie '" + speciesName + "'?")) {
+                    speciesList.splice(index, 1);
+                    window.localStorage.setItem("bioSpecies", JSON.stringify(speciesList));
+                    updateSpeciesList();
+                    populateSpeciesDropdowns();
+                    showStatus("Espécie removida com sucesso!");
+                }
+            }
+        }
+
+        // Atualizar lista de espécies no gerenciador
+        function updateSpeciesList() {
+            if (!speciesListEl) {
+                console.error("Elemento da lista de espécies não encontrado");
+                return;
+            }
+            
+            speciesListEl.innerHTML = "";
+            
+            if (speciesList.length === 0) {
+                speciesListEl.innerHTML = "<p>Nenhuma espécie cadastrada</p>";
+                return;
+            }
+            
+            for (var i = 0; i < speciesList.length; i++) {
+                var speciesName = speciesList[i];
+                
+                var div = document.createElement("div");
+                div.className = "species-item";
+                div.innerHTML = 
+                    "<span>" + speciesName + "</span>" +
+                    "<button class='red-btn delete-species-btn' data-species='" + speciesName + "'>Remover</button>";
+                
+                speciesListEl.appendChild(div);
+            }
+            
+            // Adicionar eventos aos botões de remoção
+            var deleteButtons = document.querySelectorAll('.delete-species-btn');
+            deleteButtons.forEach(function(button) {
+                button.addEventListener('click', function() {
+                    var speciesName = this.getAttribute('data-species');
+                    removeSpecies(speciesName);
+                });
+            });
+        }
+
+        // Preencher dropdown de espécies
+        function populateSpeciesDropdowns() {
+            // Limpar dropdowns
+            speciesSelectEl.innerHTML = "<option value=''>Selecione uma espécie</option>";
+            document.getElementById('editSpecies').innerHTML = "<option value=''>Selecione uma espécie</option>";
+            
+            // Preencher com espécies atualizadas
+            speciesList.forEach(function(species) {
+                var option = document.createElement("option");
+                option.value = species;
+                option.textContent = species;
+                speciesSelectEl.appendChild(option);
+                
+                var editOption = option.cloneNode(true);
+                document.getElementById('editSpecies').appendChild(editOption);
+            });
+        }
+
+        // Alternar exibição do Google Maps
+        function toggleGoogleMaps() {
+            if (mapsContainerEl.style.display === "block") {
+                mapsContainerEl.style.display = "none";
+            } else {
+                mapsContainerEl.style.display = "block";
+                mapsLatInputEl.value = "";
+                mapsLngInputEl.value = "";
+                
+                // Fechar outros painéis de localização
+                manualCoordsEl.style.display = "none";
+                manualBtnEl.textContent = "Inserir Coordenadas Manualmente";
+                locationHelpEl.style.display = "none";
+            }
+        }
+
+        // Salvar coordenadas do Google Maps
+        function saveMapsCoords() {
+            var lat = parseFloat(mapsLatInputEl.value);
+            var lng = parseFloat(mapsLngInputEl.value);
+            
+            if (isNaN(lat) || isNaN(lng)) {
+                showStatus("Digite valores válidos para latitude e longitude");
+                return;
+            }
+            
+            if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+                showStatus("Coordenadas fora dos limites válidos");
+                return;
+            }
+            
+            currentLocation = {
+                latitude: lat,
+                longitude: lng,
+                accuracy: 0, // Precisão desconhecida para coordenadas manuais
+                timestamp: new Date().toISOString()
+            };
+            
+            showStatus("Coordenadas do Google Maps salvas!");
+            mapsContainerEl.style.display = "none";
         }
 
         // Mostrar mensagem de status
@@ -358,6 +1148,23 @@
                 showStatus("Projeto criado: " + name);
             } catch (e) {
                 showStatus("ERRO ao criar projeto: " + e.message);
+            }
+        }
+
+        // Excluir projeto
+        function deleteProject() {
+            if (!currentProject) {
+                showStatus("Selecione um projeto para excluir");
+                return;
+            }
+            
+            if (confirm("Tem certeza que deseja excluir o projeto '" + currentProject + "'?")) {
+                delete projects[currentProject];
+                window.localStorage.setItem("bioProjects", JSON.stringify(projects));
+                currentProject = null;
+                updateProjectList();
+                dataListEl.innerHTML = "";
+                showStatus("Projeto excluído com sucesso!");
             }
         }
 
@@ -616,7 +1423,31 @@
                 return;
             }
             
+            var species = speciesInputEl.value.trim();
+            var abundance = parseInt(abundanceEl.value);
             var notes = notesEl.value.trim();
+            
+            if (!species) {
+                showStatus("Digite uma espécie");
+                return;
+            }
+            
+            // Verificar se a espécie existe na lista
+            if (!speciesList.includes(species)) {
+                if (confirm("A espécie '" + species + "' não está na lista. Deseja adicioná-la?")) {
+                    speciesList.push(species);
+                    window.localStorage.setItem("bioSpecies", JSON.stringify(speciesList));
+                    updateSpeciesList();
+                } else {
+                    return;
+                }
+            }
+            
+            if (isNaN(abundance) || abundance < 0) {
+                showStatus("Digite uma abundância válida");
+                return;
+            }
+            
             if (!notes) {
                 showStatus("Digite uma observação");
                 return;
@@ -624,6 +1455,8 @@
             
             try {
                 var newData = {
+                    species: species,
+                    abundance: abundance,
                     latitude: currentLocation.latitude,
                     longitude: currentLocation.longitude,
                     accuracy: currentLocation.accuracy || 0,
@@ -635,6 +1468,9 @@
                 projects[currentProject].data.push(newData);
                 window.localStorage.setItem("bioProjects", JSON.stringify(projects));
                 
+                speciesInputEl.value = "";
+                selectedSpecies = "";
+                abundanceEl.value = "";
                 notesEl.value = "";
                 currentLocation = null;
                 showData();
@@ -664,14 +1500,130 @@
                 
                 var div = document.createElement("div");
                 div.className = "item";
+                div.dataset.index = i;
                 div.innerHTML = 
+                    "<div class='coords'>Espécie: " + item.species + " | Abundância: " + item.abundance + "</div>" +
                     "<div class='coords'>Lat: " + item.latitude.toFixed(6) + 
                     " | Long: " + item.longitude.toFixed(6) + 
                     accuracyText + isManual + "</div>" +
                     "<div class='notes'>" + item.observation + "</div>" +
-                    "<div class='coords'>" + date.toLocaleString() + "</div>";
+                    "<div class='coords'>" + date.toLocaleString() + "</div>" +
+                    "<div class='action-buttons'>" +
+                    "<button class='edit-btn orange-btn'>Editar</button>" +
+                    "<button class='delete-btn red-btn'>Excluir</button>" +
+                    "</div>";
                 
                 dataListEl.appendChild(div);
+            }
+            
+            // Adicionar eventos de edição e exclusão
+            var editButtons = document.querySelectorAll('.edit-btn');
+            var deleteButtons = document.querySelectorAll('.delete-btn');
+            
+            editButtons.forEach(function(button) {
+                button.addEventListener('click', function() {
+                    var itemDiv = this.parentNode.parentNode;
+                    var index = parseInt(itemDiv.dataset.index);
+                    openEditModal(index);
+                });
+            });
+            
+            deleteButtons.forEach(function(button) {
+                button.addEventListener('click', function() {
+                    var itemDiv = this.parentNode.parentNode;
+                    var index = parseInt(itemDiv.dataset.index);
+                    deleteRecord(index);
+                });
+            });
+        }
+        
+        // Abrir modal de edição
+        function openEditModal(index) {
+            var item = projects[currentProject].data[index];
+            
+            // Preencher o modal com os dados atuais
+            document.getElementById('editSpecies').value = item.species;
+            document.getElementById('editAbundance').value = item.abundance;
+            document.getElementById('editNotes').value = item.observation;
+            document.getElementById('editLat').value = item.latitude;
+            document.getElementById('editLng').value = item.longitude;
+            
+            // Armazenar o índice atual para uso posterior
+            document.getElementById('editModal').dataset.currentIndex = index;
+            
+            // Mostrar o modal
+            document.getElementById('editModal').style.display = 'block';
+        }
+        
+        // Salvar edições
+        function saveEdit() {
+            var index = parseInt(document.getElementById('editModal').dataset.currentIndex);
+            var item = projects[currentProject].data[index];
+            
+            // Obter novos valores
+            var newSpecies = document.getElementById('editSpecies').value;
+            var newAbundance = parseInt(document.getElementById('editAbundance').value);
+            var newObservation = document.getElementById('editNotes').value.trim();
+            var newLat = parseFloat(document.getElementById('editLat').value);
+            var newLng = parseFloat(document.getElementById('editLng').value);
+            
+            // Validar
+            if (!newSpecies) {
+                showStatus("Selecione uma espécie");
+                return;
+            }
+            
+            if (isNaN(newAbundance) || newAbundance < 0) {
+                showStatus("Digite uma abundância válida");
+                return;
+            }
+            
+            if (!newObservation) {
+                showStatus("A observação não pode estar vazia");
+                return;
+            }
+            
+            if (isNaN(newLat) || isNaN(newLng) || newLat < -90 || newLat > 90 || newLng < -180 || newLng > 180) {
+                showStatus("Coordenadas inválidas");
+                return;
+            }
+            
+            // Atualizar o item
+            item.species = newSpecies;
+            item.abundance = newAbundance;
+            item.observation = newObservation;
+            item.latitude = newLat;
+            item.longitude = newLng;
+            
+            // Se as coordenadas foram alteradas, marcar como editado manualmente
+            if (newLat !== item.latitude || newLng !== item.longitude) {
+                item.manual = true;
+                item.accuracy = 0;
+            }
+            
+            // Salvar no localStorage
+            window.localStorage.setItem("bioProjects", JSON.stringify(projects));
+            
+            // Fechar o modal
+            document.getElementById('editModal').style.display = 'none';
+            
+            // Atualizar a visualização
+            showData();
+            showStatus("Registro atualizado com sucesso!");
+        }
+        
+        // Excluir registro
+        function deleteRecord(index) {
+            if (confirm("Tem certeza que deseja excluir este registro?")) {
+                // Remover o item do array
+                projects[currentProject].data.splice(index, 1);
+                
+                // Salvar no localStorage
+                window.localStorage.setItem("bioProjects", JSON.stringify(projects));
+                
+                // Atualizar a visualização
+                showData();
+                showStatus("Registro excluído com sucesso!");
             }
         }
 
@@ -705,6 +1657,8 @@
                     
                     excelData.push({
                         'Data/Hora': date.toLocaleString(),
+                        'Espécie': item.species,
+                        'Abundância': item.abundance,
                         'Latitude': item.latitude,
                         'Longitude': item.longitude,
                         'Precisão (m)': item.accuracy || 0,
@@ -743,12 +1697,14 @@
             if (data.length === 0) return;
             
             try {
-                var csv = "Data/Hora,Latitude,Longitude,Precisão (m),Método,Observação\n";
+                var csv = "Data/Hora,Espécie,Abundância,Latitude,Longitude,Precisão (m),Método,Observação\n";
                 
                 for (var i = 0; i < data.length; i++) {
                     var item = data[i];
                     var date = new Date(item.timestamp).toLocaleString();
                     csv += date + "," + 
+                           item.species + "," + 
+                           item.abundance + "," + 
                            item.latitude + "," + 
                            item.longitude + "," + 
                            (item.accuracy || 0) + "," + 
@@ -771,6 +1727,240 @@
                 showStatus("Dados exportados como CSV (fallback)");
             } catch (e) {
                 showStatus("ERRO na exportação de dados: " + e.message);
+            }
+        }
+
+        // Verificar compatibilidade com PWA e mostrar botão se necessário
+        function checkPWACompatibility() {
+            // Verificar se está rodando como aplicativo instalado
+            var isInStandaloneMode = (window.matchMedia('(display-mode: standalone)').matches) || (window.navigator.standalone) || document.referrer.includes('android-app://');
+            
+            // Verificar se o botão de instalação existe
+            var installButton = document.getElementById('installButton');
+            if (!installButton) {
+                console.log("Botão de instalação não encontrado");
+                return;
+            }
+            
+            if (!isInStandaloneMode) {
+                // Mostrar botão de instalação manual
+                installButton.style.display = 'block';
+                
+                // Adicionar evento de instalação manual se não houver suporte nativo
+                installButton.addEventListener('click', function() {
+                    showStatus("Para instalar: use o menu do navegador e selecione 'Adicionar à tela inicial'");
+                    
+                    // Mostrar instruções detalhadas
+                    var instructionsHtml = `
+                        <div style="background-color: #e8f5e9; padding: 15px; border-radius: 8px; margin-top: 15px;">
+                            <h3>Como instalar o aplicativo:</h3>
+                            <ol>
+                                <li>No Chrome: toque no menu (três pontos ⋮)</li>
+                                <li>Selecione "Adicionar à tela inicial" ou "Instalar aplicativo"</li>
+                                <li>Siga as instruções na tela</li>
+                            </ol>
+                            <p style="color: #0f9d58;">Após instalado, o app funcionará offline!</p>
+                        </div>
+                    `;
+                    
+                    var instructionsEl = document.createElement('div');
+                    instructionsEl.innerHTML = instructionsHtml;
+                    document.querySelector('.container').appendChild(instructionsEl);
+                    
+                    setTimeout(function() {
+                        document.querySelector('.container').removeChild(instructionsEl);
+                    }, 20000);
+                });
+            } else {
+                // Esconder o botão se já estiver instalado
+                installButton.style.display = 'none';
+            }
+        }
+
+        // Adicionar função para mostrar diagnóstico de importação
+        function logImportDiagnostic(message) {
+            var now = new Date();
+            var timestamp = now.getHours() + ':' + now.getMinutes() + ':' + now.getSeconds();
+            var importDiagnosticEl = document.getElementById('importDiagnostic');
+            importDiagnosticEl.innerHTML += timestamp + ' - ' + message + '<br>';
+            importDiagnosticEl.style.display = "block";
+            importDiagnosticEl.scrollTop = importDiagnosticEl.scrollHeight;
+            
+            // Também registrar no diagnóstico principal
+            logDiagnostic(message);
+        }
+
+        // Verificar suporte à geolocalização
+        function checkGeolocationSupport() {
+            if (!navigator.geolocation) {
+                logDiagnostic("Geolocalização não suportada neste navegador");
+                showStatus("Seu navegador não suporta geolocalização");
+                return false;
+            }
+            
+            logDiagnostic("Geolocalização suportada");
+            return true;
+        }
+
+        // Verificar se a biblioteca XLSX está disponível e carregá-la se necessário
+        function checkAndLoadXLSX() {
+            if (typeof XLSX === 'undefined') {
+                console.log("Biblioteca XLSX não encontrada, tentando carregar...");
+                
+                var script = document.createElement('script');
+                script.src = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
+                script.async = true;
+                script.onload = function() {
+                    console.log("Biblioteca XLSX carregada com sucesso!");
+                    logDiagnostic("Biblioteca XLSX carregada com sucesso!");
+                };
+                script.onerror = function() {
+                    console.error("Falha ao carregar biblioteca XLSX");
+                    logDiagnostic("Falha ao carregar biblioteca XLSX");
+                };
+                
+                document.head.appendChild(script);
+            } else {
+                console.log("Biblioteca XLSX já está disponível");
+            }
+        }
+
+        // Chamar a função de verificação após o carregamento da página
+        window.addEventListener('load', checkAndLoadXLSX);
+
+        // Função para inicializar o autocomplete
+        function initAutocomplete() {
+            speciesInputEl.addEventListener('input', function() {
+                const query = this.value.toLowerCase();
+                if (query.length < 1) {
+                    speciesSuggestionsEl.style.display = 'none';
+                    return;
+                }
+
+                const suggestions = speciesList.filter(species => 
+                    species.toLowerCase().includes(query)
+                );
+
+                if (suggestions.length > 0) {
+                    showSuggestions(suggestions, query);
+                } else {
+                    speciesSuggestionsEl.style.display = 'none';
+                }
+            });
+
+            speciesInputEl.addEventListener('focus', function() {
+                if (this.value.length > 0) {
+                    const query = this.value.toLowerCase();
+                    const suggestions = speciesList.filter(species => 
+                        species.toLowerCase().includes(query)
+                    );
+                    if (suggestions.length > 0) {
+                        showSuggestions(suggestions, query);
+                    }
+                }
+            });
+
+            // Fechar sugestões ao clicar fora
+            document.addEventListener('click', function(e) {
+                if (!speciesInputEl.contains(e.target) && !speciesSuggestionsEl.contains(e.target)) {
+                    speciesSuggestionsEl.style.display = 'none';
+                }
+            });
+
+            // Navegação com teclado
+            speciesInputEl.addEventListener('keydown', function(e) {
+                const suggestions = speciesSuggestionsEl.children;
+                let selectedIndex = -1;
+
+                for (let i = 0; i < suggestions.length; i++) {
+                    if (suggestions[i].classList.contains('selected')) {
+                        selectedIndex = i;
+                        break;
+                    }
+                }
+
+                switch (e.key) {
+                    case 'ArrowDown':
+                        e.preventDefault();
+                        if (speciesSuggestionsEl.style.display === 'none') {
+                            const query = this.value.toLowerCase();
+                            const suggestions = speciesList.filter(species => 
+                                species.toLowerCase().includes(query)
+                            );
+                            if (suggestions.length > 0) {
+                                showSuggestions(suggestions, query);
+                            }
+                        } else {
+                            if (selectedIndex < suggestions.length - 1) {
+                                if (selectedIndex >= 0) {
+                                    suggestions[selectedIndex].classList.remove('selected');
+                                }
+                                suggestions[selectedIndex + 1].classList.add('selected');
+                                suggestions[selectedIndex + 1].scrollIntoView({ block: 'nearest' });
+                            }
+                        }
+                        break;
+                    case 'ArrowUp':
+                        e.preventDefault();
+                        if (selectedIndex > 0) {
+                            suggestions[selectedIndex].classList.remove('selected');
+                            suggestions[selectedIndex - 1].classList.add('selected');
+                            suggestions[selectedIndex - 1].scrollIntoView({ block: 'nearest' });
+                        }
+                        break;
+                    case 'Enter':
+                        e.preventDefault();
+                        if (selectedIndex >= 0) {
+                            selectSpecies(suggestions[selectedIndex].textContent);
+                        }
+                        break;
+                    case 'Escape':
+                        speciesSuggestionsEl.style.display = 'none';
+                        break;
+                }
+            });
+        }
+
+        // Função para mostrar sugestões
+        function showSuggestions(suggestions, query) {
+            speciesSuggestionsEl.innerHTML = '';
+            suggestions.forEach(species => {
+                const div = document.createElement('div');
+                div.className = 'species-suggestion';
+                
+                // Destacar parte do texto que corresponde à busca
+                const index = species.toLowerCase().indexOf(query.toLowerCase());
+                if (index >= 0) {
+                    const before = species.substring(0, index);
+                    const match = species.substring(index, index + query.length);
+                    const after = species.substring(index + query.length);
+                    div.innerHTML = before + '<span class="highlight">' + match + '</span>' + after;
+                } else {
+                    div.textContent = species;
+                }
+
+                div.addEventListener('click', function() {
+                    selectSpecies(species);
+                });
+                speciesSuggestionsEl.appendChild(div);
+            });
+            speciesSuggestionsEl.style.display = 'block';
+        }
+
+        // Função para selecionar uma espécie
+        function selectSpecies(species) {
+            speciesInputEl.value = species;
+            selectedSpecies = species;
+            speciesSuggestionsEl.style.display = 'none';
+        }
+
+        // Função para alternar cards
+        function toggleCard(cardId) {
+            var content = document.getElementById(cardId);
+            if (content.style.display === "block") {
+                content.style.display = "none";
+            } else {
+                content.style.display = "block";
             }
         }
 
