@@ -3,9 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Coleta de Dados Biológicos</title>
+    <title>BioPlan</title>
     <!-- SheetJS para exportação em Excel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- Chart.js para visualizações gráficas -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -24,11 +26,39 @@
             margin-bottom: 15px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
-        .header {
-            font-weight: bold;
+        .card-collapsible {
+            margin-bottom: 5px;
+        }
+        .card-content {
+            display: none;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 0 0 8px 8px;
+            margin-top: -5px;
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .card-header:hover {
+            background-color: #f8f9fa;
+        }
+        .card-header h3 {
+            margin: 0;
+            font-size: 16px;
+        }
+        .section-title {
+            font-size: 18px;
+            color: #333;
             margin-bottom: 15px;
             padding-bottom: 8px;
-            border-bottom: 1px solid #eee;
+            border-bottom: 2px solid #4285f4;
         }
         input, textarea, select {
             width: 100%;
@@ -146,33 +176,285 @@
             border-radius: 4px;
             margin-bottom: 10px;
             font-size: 12px;
-            max-height: 100px;
+            max-height: 150px;
             overflow-y: auto;
+            border: 1px solid #ffd54f;
+        }
+        .install-button {
+            display: none;
+            position: fixed;
+            bottom: 70px; /* Ajustado para dar espaço ao footer */
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            padding: 10px 20px;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 1000;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+            margin-top: 5px;
+        }
+        .action-buttons button {
+            padding: 3px 8px;
+            font-size: 12px;
+            margin-bottom: 0;
+        }
+        .edit-mode {
+            background-color: #fff3e0;
+            border: 1px dashed #ff9800;
+        }
+        .species-select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .species-manager {
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: #f0f8ff;
+            border-radius: 4px;
+            display: none;
+        }
+        .species-list {
+            margin: 10px 0;
+            max-height: 150px;
+            overflow-y: auto;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            padding: 5px;
+            background-color: white;
+        }
+        .species-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px;
+            border-bottom: 1px solid #eee;
+        }
+        .import-section {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #cce5ff;
+        }
+        .import-area {
+            background-color: white;
+            border: 1px solid #cce5ff;
+            border-radius: 4px;
+            padding: 10px;
+            margin-top: 10px;
+        }
+        .file-input-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .file-input-container input[type="file"] {
+            padding: 8px;
+            border: 1px dashed #4285f4;
+            border-radius: 4px;
+            background-color: #f8f9fa;
+        }
+        .species-select-container {
+            position: relative;
+            margin-bottom: 10px;
+        }
+        .species-input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .species-suggestions {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 0 0 4px 4px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .species-suggestion {
+            padding: 8px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+        }
+        .species-suggestion:hover {
+            background-color: #f5f5f5;
+        }
+        .species-suggestion.selected {
+            background-color: #e3f2fd;
+        }
+        .highlight {
+            background-color: #fff9c4;
+            padding: 0 2px;
+        }
+        .footer {
+            margin-top: 30px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            font-size: 12px;
+            color: #666;
+            text-align: center;
+        }
+        .footer p {
+            margin: 5px 0;
+        }
+        .footer .citation {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #ddd;
+        }
+        .footer .donation {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #e8f5e9;
+            border-radius: 4px;
+        }
+        .footer .pix-key {
+            font-family: monospace;
+            background-color: #fff;
+            padding: 5px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            display: inline-block;
+            margin-top: 5px;
+        }
+        .documentation-link {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #e3f2fd;
+            border-radius: 4px;
+        }
+        .documentation-link a {
+            color: #1976d2;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .documentation-link a:hover {
+            text-decoration: underline;
+        }
+        .pwa-install-info {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #ddd;
+            font-size: 14px;
+        }
+        .install-instructions {
+            background-color: #e8f5e9;
+            padding: 12px;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+        .install-instructions p {
+            margin: 8px 0;
+        }
+        .helper-text {
+            color: #0f9d58;
+            font-style: italic;
+        }
+        .install-notes {
+            margin-top: 10px;
+            padding-left: 20px;
+        }
+        .install-notes li {
+            margin-bottom: 5px;
+        }
+        .stats-container {
+            padding: 15px;
+        }
+        .chart-container {
+            margin-bottom: 20px;
+            height: 400px;
+        }
+        .stats-summary {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+        }
+        .stats-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        .stats-table th, .stats-table td {
+            padding: 8px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        .stats-table th {
+            background-color: #f0f0f0;
+        }
+        .stats-table tr:nth-child(even) {
+            background-color: #f8f8f8;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Coleta de Dados Biológicos</h1>
+        <h1>BioPlan</h1>
         
         <div id="status" class="status"></div>
         
         <!-- Projetos -->
         <div class="card">
-            <div class="header">Projetos</div>
+            <div class="section-title">Projetos</div>
             <input type="text" id="projectName" placeholder="Nome do novo projeto">
             <button id="createBtn">Criar Projeto</button>
             <select id="projectSelect">
                 <option value="">Selecione um projeto</option>
             </select>
+            <button id="deleteProjectBtn" class="red-btn">Excluir Projeto</button>
         </div>
 
         <!-- Coleta -->
         <div class="card">
-            <div class="header">Coleta de Dados</div>
+            <div class="section-title">Coleta de Dados</div>
+            <label>Espécie:</label>
+            <div class="species-select-container">
+                <input type="text" id="speciesInput" class="species-input" placeholder="Digite para buscar espécies...">
+                <div id="speciesSuggestions" class="species-suggestions"></div>
+            </div>
+            <label>Abundância:</label>
+            <input type="number" id="abundance" placeholder="Quantidade">
             <label>Observação:</label>
             <textarea id="notes" rows="3"></textarea>
             <button id="locationBtn" class="green-btn">Capturar Localização</button>
+            <button id="googleMapsBtn" class="green-btn">Localização via Google Maps</button>
+            <div id="mapsContainer" class="maps-container" style="display: none;">
+                <div class="maps-info">
+                    <p><strong>Para obter coordenadas do Google Maps:</strong></p>
+                    <ol>
+                        <li>Abra o <a href="https://maps.google.com" target="_blank">Google Maps</a></li>
+                        <li>Navegue até o local desejado</li>
+                        <li>Clique e segure na localização para obter as coordenadas</li>
+                        <li>Copie as coordenadas e insira-as abaixo</li>
+                    </ol>
+                </div>
+                <div class="coord-input">
+                    <input type="number" id="mapsLatInput" placeholder="Latitude" step="0.000001">
+                    <input type="number" id="mapsLngInput" placeholder="Longitude" step="0.000001">
+                </div>
+                <div class="maps-buttons">
+                    <button id="saveMapsCoords" class="green-btn">Salvar Coordenadas</button>
+                    <button id="closeMapsBtn" class="red-btn">Cancelar</button>
+                </div>
+            </div>
             <div id="diagnostic" class="diagnostic"></div>
             
             <div id="locationHelp" class="location-help">
@@ -203,13 +485,151 @@
             <button id="saveBtn">Salvar Dados</button>
         </div>
 
-        <!-- Dados -->
-        <div class="card">
-            <div class="flex header">
-                <span>Dados Coletados</span>
-                <button id="exportBtn" class="green-btn export-btn">Exportar Excel</button>
+        <!-- Gerenciamento -->
+        <div class="card-collapsible">
+            <div class="card-header" onclick="toggleCard('speciesCard')">
+                <h3>Gerenciar Espécies</h3>
+                <button class="orange-btn export-btn">Mostrar/Ocultar</button>
             </div>
-            <div id="dataList"></div>
+            <div id="speciesCard" class="card-content">
+                <!-- Adicionar espécies manualmente -->
+                <div class="manual-add-section">
+                    <h4 style="margin: 0 0 10px 0;">Adicionar Espécie</h4>
+                    <input type="text" id="newSpecies" placeholder="Nome da nova espécie">
+                    <button id="addSpeciesBtn" class="green-btn">Adicionar Espécie</button>
+                </div>
+
+                <!-- Lista de espécies -->
+                <div class="species-list" id="speciesList">
+                    <!-- Espécies serão adicionadas aqui -->
+                </div>
+
+                <!-- Seção de importação -->
+                <div class="import-section">
+                    <h4 style="margin: 10px 0;">Importar Espécies</h4>
+                    <div class="import-area">
+                        <p class="helper-text">Selecione um arquivo Excel (.xlsx, .xls), CSV ou TXT com nomes de espécies (um por linha).</p>
+                        <div class="file-input-container">
+                            <input type="file" id="importExcel" accept=".xlsx, .xls, .csv, .txt">
+                            <button id="importExcelBtn" class="green-btn">Importar Espécies</button>
+                        </div>
+                        <button id="testXLSXBtn" class="orange-btn" style="margin-top: 5px;">Verificar Biblioteca XLSX</button>
+                        <div id="importDiagnostic" class="diagnostic"></div>
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <button id="importTxtBtn" class="orange-btn">Importar de TXT (Método Alternativo)</button>
+                        <p class="helper-text">Use esta opção se a importação normal não funcionar.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dados Coletados -->
+        <div class="card-collapsible">
+            <div class="card-header" onclick="toggleCard('dataCard')">
+                <h3>Dados Coletados</h3>
+                <div>
+                    <button id="exportBtn" class="green-btn export-btn">Exportar Excel</button>
+                    <button id="exportMultipleBtn" class="green-btn export-btn">Exportar Múltiplos</button>
+                    <button class="orange-btn export-btn">Mostrar/Ocultar</button>
+                </div>
+            </div>
+            <div id="dataCard" class="card-content">
+                <p style="font-size: 12px; color: #666; margin-bottom: 10px;">⚠️ Os dados são armazenados apenas localmente no seu dispositivo. Faça backup regular exportando para Excel.</p>
+                <div id="dataList"></div>
+            </div>
+        </div>
+
+        <!-- Modal de Exportação Múltipla -->
+        <div id="exportModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.5); z-index: 1000;">
+            <div style="background: white; max-width: 90%; width: 500px; margin: 20px auto; padding: 20px; border-radius: 8px; max-height: 90vh; overflow-y: auto;">
+                <h3 style="margin-top: 0;">Exportar Múltiplos Projetos</h3>
+                
+                <div id="projectList" style="margin: 15px 0;">
+                    <!-- Checkboxes serão adicionados aqui -->
+                </div>
+                
+                <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+                    <button id="cancelExportBtn" style="background-color: #9e9e9e; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer;">Cancelar</button>
+                    <button id="exportSelectedBtn" style="background-color: #0f9d58; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer;">Exportar Selecionados</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <div class="donation" style="font-size: 14px;">
+                <p><strong>Se o App foi útil para você, faça uma doação por Pix:</strong></p>
+                <p>Chave aleatória: <span class="pix-key">3c37c492-cebe-4927-b7db-68b004b67c99</span></p>
+            </div>
+
+            <div class="citation">
+                <p><strong>Citar como:</strong></p>
+                <p>RANGEL, Danilo Freitas. WebApp BioPlan. 2025. Disponível em: &lt;https://danilofr1.github.io/biop/&gt;. Acesso em: DATA MES. ANO.</p>
+                <p><strong>Contato:</strong> drangel@unifesp.br</p>
+                <p xmlns:cc="http://creativecommons.org/ns#" xmlns:dct="http://purl.org/dc/terms/"><a property="dct:title" rel="cc:attributionURL" href="https://danilofr1.github.io/biop/">BioPlan</a> by <span property="cc:attributionName">Danilo Freitas Rangel</span> is licensed under <a href="https://creativecommons.org/licenses/by-sa/4.0/?ref=chooser-v1" target="_blank" rel="license noopener noreferrer" style="display:inline-block;">CC BY-SA 4.0<img style="height:22px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/cc.svg?ref=chooser-v1" alt=""><img style="height:22px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/by.svg?ref=chooser-v1" alt=""><img style="height:22px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/sa.svg?ref=chooser-v1" alt=""></a></p>
+            </div>
+
+            <div class="documentation-link">
+                <p><strong>📖 Documentação:</strong></p>
+                <p>Para entender todas as funcionalidades do BioPlan, consulte o <a href="readme.html" target="_blank">Manual do Usuário</a></p>
+            </div>
+
+            <div class="beta-notice" style="margin-top: 15px; padding: 10px; background-color: #fff3e0; border-radius: 4px; text-align: center;">
+                <p><strong>⚠️ Versão Beta</strong></p>
+                <p>Este é um aplicativo em desenvolvimento (Beta) e sem fins lucrativos.</p>
+            </div>
+
+            <div class="pwa-install-info">
+                <p><strong>📱 Instale o BioPlan no seu dispositivo:</strong></p>
+                <div class="install-instructions">
+                    <p><strong>Samsung:</strong> Use o Samsung Internet e toque em Menu (☰) → "Adicionar página à" → "Tela inicial" → "Instalar"</p>
+                    <p><strong>Outros:</strong> No Chrome, toque em Menu (⋮) → "Adicionar à tela inicial"</p>
+                    <p class="helper-text">Após instalado, o app funcionará offline! Observações importantes:</p>
+                    <ul class="install-notes">
+                        <li>No Chrome, especialmente em dispositivos Samsung, o funcionamento offline pode ser limitado</li>
+                        <li>Para melhor experiência em dispositivos Samsung, use o Samsung Internet</li>
+                        <li>É necessário acessar o app online pela primeira vez antes de usar offline</li>
+                        <li>Após instalado, use sempre o ícone na tela inicial para abrir o app</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de edição -->
+    <div id="editModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.5); z-index: 1000;">
+        <div style="background: white; max-width: 90%; width: 500px; margin: 20px auto; padding: 20px; border-radius: 8px; max-height: 90vh; overflow-y: auto;">
+            <h3 style="margin-top: 0;">Editar Registro</h3>
+            
+            <div style="margin-bottom: 15px;">
+                <label>Espécie:</label>
+                <div class="species-select-container">
+                    <input type="text" id="editSpeciesInput" class="species-input" placeholder="Digite para buscar espécies...">
+                    <div id="editSpeciesSuggestions" class="species-suggestions"></div>
+                </div>
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label>Abundância:</label>
+                <input type="number" id="editAbundance" placeholder="Quantidade">
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label>Observação:</label>
+                <textarea id="editNotes" rows="3" style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ddd; border-radius: 4px;"></textarea>
+            </div>
+            
+            <div style="margin-bottom: 15px;">
+                <label>Coordenadas:</label>
+                <div style="display: flex; gap: 10px; margin-top: 5px;">
+                    <input type="number" id="editLat" placeholder="Latitude" step="0.000001" style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    <input type="number" id="editLng" placeholder="Longitude" step="0.000001" style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+            </div>
+            
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button id="cancelEditBtn" style="background-color: #9e9e9e; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer;">Cancelar</button>
+                <button id="saveEditBtn" style="background-color: #0f9d58; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer;">Salvar Alterações</button>
+            </div>
         </div>
     </div>
 
@@ -220,13 +640,21 @@
         var currentLocation = null;
         var watchId = null;
         var locationUpdateCount = 0;
+        var speciesList = []; // Será preenchido a partir do localStorage
 
         // Elementos 
         var statusEl = document.getElementById("status");
         var projectNameEl = document.getElementById("projectName");
         var projectSelectEl = document.getElementById("projectSelect");
         var createBtnEl = document.getElementById("createBtn");
+        var deleteProjectBtnEl = document.getElementById("deleteProjectBtn");
         var locationBtnEl = document.getElementById("locationBtn");
+        var googleMapsBtnEl = document.getElementById("googleMapsBtn");
+        var mapsContainerEl = document.getElementById("mapsContainer");
+        var mapsLatInputEl = document.getElementById("mapsLatInput");
+        var mapsLngInputEl = document.getElementById("mapsLngInput");
+        var saveMapsCoordsEl = document.getElementById("saveMapsCoords");
+        var closeMapsBtn = document.getElementById("closeMapsBtn");
         var diagnosticEl = document.getElementById("diagnostic");
         var locationHelpEl = document.getElementById("locationHelp");
         var tryAgainBtnEl = document.getElementById("tryAgainBtn");
@@ -237,10 +665,25 @@
         var latInputEl = document.getElementById("latInput");
         var lngInputEl = document.getElementById("lngInput");
         var saveCoordsEl = document.getElementById("saveCoords");
+        var speciesSelectEl = document.getElementById("speciesSelect");
+        var abundanceEl = document.getElementById("abundance");
         var notesEl = document.getElementById("notes");
         var saveBtnEl = document.getElementById("saveBtn");
         var exportBtnEl = document.getElementById("exportBtn");
         var dataListEl = document.getElementById("dataList");
+        var speciesManagerEl = document.getElementById("speciesManager");
+        var newSpeciesEl = document.getElementById("newSpecies");
+        var addSpeciesBtnEl = document.getElementById("addSpeciesBtn");
+        var speciesListEl = document.getElementById("speciesList");
+        var importExcelEl = document.getElementById("importExcel");
+        var importExcelBtnEl = document.getElementById("importExcelBtn");
+        var testXLSXBtnEl = document.getElementById("testXLSXBtn");
+        var importTxtBtnEl = document.getElementById("importTxtBtn");
+
+        // Elementos adicionados para autocomplete
+        var speciesInputEl = document.getElementById("speciesInput");
+        var speciesSuggestionsEl = document.getElementById("speciesSuggestions");
+        var selectedSpecies = "";
 
         // Inicialização
         function init() {
@@ -260,10 +703,19 @@
                 showStatus("ERRO ao carregar dados: " + e.message);
             }
             
+            // Carregar espécies
+            loadSpecies();
+            
             // Configurar eventos
             createBtnEl.onclick = createProject;
+            deleteProjectBtnEl.onclick = deleteProject;
             projectSelectEl.onchange = loadProject;
             locationBtnEl.onclick = captureLocation;
+            googleMapsBtnEl.onclick = toggleGoogleMaps;
+            saveMapsCoordsEl.onclick = saveMapsCoords;
+            closeMapsBtn.onclick = function() {
+                mapsContainerEl.style.display = "none";
+            };
             tryAgainBtnEl.onclick = function() {
                 locationHelpEl.style.display = "none";
                 captureLocation();
@@ -279,38 +731,488 @@
             saveCoordsEl.onclick = saveManualCoords;
             saveBtnEl.onclick = saveData;
             exportBtnEl.onclick = exportExcel;
+
+            // Eventos de exportação múltipla
+            document.getElementById('exportMultipleBtn').onclick = openExportModal;
+            document.getElementById('cancelExportBtn').onclick = closeExportModal;
+            document.getElementById('exportSelectedBtn').onclick = exportMultipleProjects;
+            
+            // Eventos de gerenciamento de espécies
+            if (addSpeciesBtnEl) {
+                addSpeciesBtnEl.onclick = addSpecies;
+            }
+            
+            // Eventos do modal de edição
+            var saveEditBtn = document.getElementById('saveEditBtn');
+            var cancelEditBtn = document.getElementById('cancelEditBtn');
+            if (saveEditBtn) {
+                saveEditBtn.addEventListener('click', saveEdit);
+            }
+            if (cancelEditBtn) {
+                cancelEditBtn.addEventListener('click', function() {
+                    var editModal = document.getElementById('editModal');
+                    if (editModal) {
+                        editModal.style.display = 'none';
+                    }
+                });
+            }
             
             // Verificar suporte à geolocalização
             checkGeolocationSupport();
-        }
-        
-        // Verificar suporte à geolocalização
-        function checkGeolocationSupport() {
-            if (navigator.geolocation) {
-                logDiagnostic("Geolocalização disponível");
-                // Pré-verificar permissão (se disponível no navegador)
-                if (navigator.permissions && navigator.permissions.query) {
-                    navigator.permissions.query({ name: 'geolocation' })
-                        .then(function(result) {
-                            logDiagnostic("Estado da permissão: " + result.state);
-                            if (result.state === 'denied') {
-                                showStatus("Permissão de localização negada");
-                                setTimeout(function() {
-                                    locationHelpEl.style.display = "block";
-                                }, 1500);
-                            }
-                        }).catch(function(err) {
-                            logDiagnostic("Erro ao verificar permissão: " + err.message);
-                        });
+
+            // Evento para importar espécies de Excel/CSV/TXT
+            importExcelBtnEl.onclick = function() {
+                // Limpar mensagens anteriores
+                var importDiagnosticEl = document.getElementById('importDiagnostic');
+                importDiagnosticEl.innerHTML = "";
+                importDiagnosticEl.style.display = "block";
+                
+                logImportDiagnostic("Iniciando importação de espécies");
+                
+                // Verificar se um arquivo foi selecionado
+                var fileInput = document.getElementById('importExcel');
+                if (!fileInput.files.length) {
+                    showStatus("Selecione um arquivo primeiro");
+                    logImportDiagnostic("Nenhum arquivo selecionado");
+                    return;
                 }
-            } else {
-                showStatus("Seu navegador não suporta geolocalização");
-                logDiagnostic("Geolocalização não suportada");
-                setTimeout(function() {
-                    manualCoordsEl.style.display = "block";
-                    manualBtnEl.textContent = "Ocultar Entrada Manual";
-                }, 1500);
+                
+                var file = fileInput.files[0];
+                logImportDiagnostic("Arquivo selecionado: " + file.name);
+                showStatus("Processando arquivo " + file.name + "...");
+                
+                // Determinar tipo de arquivo
+                var fileName = file.name.toLowerCase();
+                var isCSV = fileName.endsWith('.csv');
+                var isTXT = fileName.endsWith('.txt');
+                var isExcel = fileName.endsWith('.xlsx') || fileName.endsWith('.xls');
+                
+                logImportDiagnostic("Tipo de arquivo: " + (isExcel ? "Excel" : (isCSV ? "CSV" : "TXT")));
+                
+                var reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    try {
+                        logImportDiagnostic("Arquivo lido com sucesso");
+                        
+                        var speciesData = [];
+                        
+                        if (isCSV || isTXT) {
+                            // Processar CSV ou TXT (ambos são tratados como texto)
+                            var content = e.target.result;
+                            var lines = content.split(/\r?\n/); // Suporta quebras de linha Windows e Unix
+                            logImportDiagnostic("Linhas encontradas: " + lines.length);
+                            
+                            for (var i = 0; i < lines.length; i++) {
+                                var line = lines[i].trim();
+                                if (line) {
+                                    if (isCSV) {
+                                        // Para CSV, pegamos apenas a primeira coluna
+                                        var parts = line.split(',');
+                                        if (parts.length > 0 && parts[0].trim()) {
+                                            speciesData.push(parts[0].trim());
+                                        }
+                                    } else {
+                                        // Para TXT, cada linha é uma espécie
+                                        speciesData.push(line);
+                                    }
+                                }
+                            }
+                        } else if (isExcel) {
+                            // Verificar se a biblioteca SheetJS está disponível
+                            if (typeof XLSX === 'undefined') {
+                                throw new Error("Biblioteca XLSX não disponível. Tente usar um arquivo CSV ou TXT.");
+                            }
+                            
+                            // Processar Excel
+                            var data = new Uint8Array(e.target.result);
+                            logImportDiagnostic("Lendo arquivo Excel...");
+                            
+                            try {
+                                var workbook = XLSX.read(data, {type: 'array'});
+                                logImportDiagnostic("Workbook lido com sucesso");
+                                
+                                if (!workbook || !workbook.SheetNames || workbook.SheetNames.length === 0) {
+                                    throw new Error("Arquivo Excel inválido ou vazio");
+                                }
+                                
+                                var sheetName = workbook.SheetNames[0];
+                                logImportDiagnostic("Lendo planilha: " + sheetName);
+                                
+                                var worksheet = workbook.Sheets[sheetName];
+                                var jsonData = XLSX.utils.sheet_to_json(worksheet, {header: 1});
+                                
+                                logImportDiagnostic("Dados extraídos: " + jsonData.length + " linhas");
+                                
+                                // Extrair primeira coluna de cada linha
+                                for (var i = 0; i < jsonData.length; i++) {
+                                    var row = jsonData[i];
+                                    if (row && row.length > 0 && row[0] !== undefined && row[0] !== null) {
+                                        var speciesName = row[0].toString().trim();
+                                        if (speciesName) {
+                                            speciesData.push(speciesName);
+                                        }
+                                    }
+                                }
+                            } catch (excelError) {
+                                logImportDiagnostic("Erro ao processar Excel: " + excelError.message);
+                                throw new Error("Erro ao processar arquivo Excel: " + excelError.message);
+                            }
+                        } else {
+                            throw new Error("Formato de arquivo não suportado. Use Excel, CSV ou TXT.");
+                        }
+                        
+                        // Verificar se temos dados
+                        if (speciesData.length === 0) {
+                            throw new Error("Nenhuma espécie encontrada no arquivo");
+                        }
+                        
+                        logImportDiagnostic("Espécies encontradas: " + speciesData.length);
+                        
+                        // Adicionar espécies à lista
+                        var addedCount = 0;
+                        var duplicateCount = 0;
+                        
+                        for (var i = 0; i < speciesData.length; i++) {
+                            var speciesName = speciesData[i];
+                            
+                            if (!speciesList.includes(speciesName)) {
+                                speciesList.push(speciesName);
+                                logImportDiagnostic("Espécie adicionada: " + speciesName);
+                                addedCount++;
+                            } else {
+                                logImportDiagnostic("Espécie duplicada ignorada: " + speciesName);
+                                duplicateCount++;
+                            }
+                        }
+                        
+                        // Salvar e atualizar a interface
+                        window.localStorage.setItem("bioSpecies", JSON.stringify(speciesList));
+                        updateSpeciesList();
+                        populateSpeciesDropdowns();
+                        
+                        // Mostrar resultado
+                        var message = "Importação concluída: " + addedCount + " espécies adicionadas";
+                        if (duplicateCount > 0) {
+                            message += ", " + duplicateCount + " duplicadas ignoradas";
+                        }
+                        
+                        showStatus(message);
+                        logImportDiagnostic("SUCESSO: " + message);
+                        
+                        // Limpar o campo de arquivo
+                        fileInput.value = "";
+                        
+                    } catch (error) {
+                        logImportDiagnostic("ERRO: " + error.message);
+                        showStatus("ERRO ao processar arquivo: " + error.message);
+                    }
+                };
+                
+                reader.onerror = function() {
+                    logImportDiagnostic("ERRO ao ler o arquivo");
+                    showStatus("ERRO ao ler o arquivo");
+                };
+                
+                // Ler o arquivo no formato adequado
+                if (isCSV || isTXT) {
+                    reader.readAsText(file);
+                } else {
+                    reader.readAsArrayBuffer(file);
+                }
+            };
+
+            // Adicionar evento para testar a biblioteca XLSX
+            testXLSXBtnEl.addEventListener('click', function() {
+                var importDiagnosticEl = document.getElementById('importDiagnostic');
+                importDiagnosticEl.innerHTML = "";
+                importDiagnosticEl.style.display = "block";
+                
+                if (typeof XLSX === 'undefined') {
+                    logImportDiagnostic("ERRO: Biblioteca XLSX não está disponível!");
+                    showStatus("ERRO: Biblioteca XLSX não está disponível!");
+                } else {
+                    logImportDiagnostic("SUCESSO: Biblioteca XLSX está disponível (versão: " + (XLSX.version || "desconhecida") + ")");
+                    showStatus("Biblioteca XLSX está disponível!");
+                    
+                    // Criar um workbook simples para testar
+                    try {
+                        var wb = XLSX.utils.book_new();
+                        var ws = XLSX.utils.aoa_to_sheet([["Teste"]]);
+                        XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+                        logImportDiagnostic("SUCESSO: Teste de criação de workbook funcionou!");
+                    } catch (e) {
+                        logImportDiagnostic("ERRO ao testar workbook: " + e.message);
+                    }
+                }
+            });
+
+            // Adicionar evento para importação simplificada de TXT
+            importTxtBtnEl.addEventListener('click', function() {
+                var importDiagnosticEl = document.getElementById('importDiagnostic');
+                importDiagnosticEl.innerHTML = "";
+                importDiagnosticEl.style.display = "block";
+                
+                var fileInput = document.getElementById('importExcel');
+                if (!fileInput.files.length) {
+                    showStatus("Selecione um arquivo TXT primeiro");
+                    logImportDiagnostic("Nenhum arquivo selecionado");
+                    return;
+                }
+                
+                var file = fileInput.files[0];
+                var fileName = file.name.toLowerCase();
+                
+                if (!fileName.endsWith('.txt') && !fileName.endsWith('.csv')) {
+                    showStatus("Por favor, selecione um arquivo TXT ou CSV para este método");
+                    logImportDiagnostic("Arquivo inválido para importação simplificada: " + fileName);
+                    return;
+                }
+                
+                logImportDiagnostic("Iniciando importação simplificada de: " + file.name);
+                
+                var reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    try {
+                        var content = e.target.result;
+                        var lines = content.split(/\r?\n/);
+                        var validLines = [];
+                        
+                        // Filtrar linhas vazias
+                        for (var i = 0; i < lines.length; i++) {
+                            var line = lines[i].trim();
+                            if (line) {
+                                if (fileName.endsWith('.csv')) {
+                                    // Para CSV, pegamos apenas a primeira coluna
+                                    var parts = line.split(',');
+                                    if (parts.length > 0 && parts[0].trim()) {
+                                        validLines.push(parts[0].trim());
+                                    }
+                                } else {
+                                    // Para TXT, cada linha é uma espécie
+                                    validLines.push(line);
+                                }
+                            }
+                        }
+                        
+                        if (validLines.length === 0) {
+                            throw new Error("Nenhuma espécie encontrada no arquivo");
+                        }
+                        
+                        logImportDiagnostic("Espécies encontradas: " + validLines.length);
+                        
+                        // Adicionar espécies à lista
+                        var addedCount = 0;
+                        var duplicateCount = 0;
+                        
+                        for (var i = 0; i < validLines.length; i++) {
+                            var speciesName = validLines[i];
+                            
+                            if (!speciesList.includes(speciesName)) {
+                                speciesList.push(speciesName);
+                                logImportDiagnostic("Espécie adicionada: " + speciesName);
+                                addedCount++;
+                            } else {
+                                logImportDiagnostic("Espécie duplicada ignorada: " + speciesName);
+                                duplicateCount++;
+                            }
+                        }
+                        
+                        // Salvar e atualizar a interface
+                        window.localStorage.setItem("bioSpecies", JSON.stringify(speciesList));
+                        updateSpeciesList();
+                        populateSpeciesDropdowns();
+                        
+                        // Mostrar resultado
+                        var message = "Importação concluída: " + addedCount + " espécies adicionadas";
+                        if (duplicateCount > 0) {
+                            message += ", " + duplicateCount + " duplicadas ignoradas";
+                        }
+                        
+                        showStatus(message);
+                        logImportDiagnostic("SUCESSO: " + message);
+                        
+                        // Limpar o campo de arquivo
+                        fileInput.value = "";
+                        
+                    } catch (error) {
+                        logImportDiagnostic("ERRO: " + error.message);
+                        showStatus("ERRO ao processar arquivo: " + error.message);
+                    }
+                };
+                
+                reader.onerror = function() {
+                    logImportDiagnostic("ERRO ao ler o arquivo");
+                    showStatus("ERRO ao ler o arquivo");
+                };
+                
+                reader.readAsText(file);
+            });
+
+            // Função para inicializar o autocomplete
+            initAutocomplete();
+        }
+
+        // Carregar espécies do localStorage
+        function loadSpecies() {
+            try {
+                var savedSpecies = window.localStorage.getItem("bioSpecies");
+                if (savedSpecies) {
+                    speciesList = JSON.parse(savedSpecies);
+                } else {
+                    // Espécies padrão se não houver nenhuma salva
+                    speciesList = ["Espécie A", "Espécie B", "Espécie C"];
+                    window.localStorage.setItem("bioSpecies", JSON.stringify(speciesList));
+                }
+                updateSpeciesList();
+            } catch (e) {
+                console.error("Erro ao carregar espécies:", e);
+                logDiagnostic("Erro ao carregar espécies: " + e.message);
             }
+        }
+
+        // Alternar exibição do gerenciador de espécies
+        function toggleSpeciesManager() {
+            if (speciesManagerEl.style.display === "block") {
+                speciesManagerEl.style.display = "none";
+                toggleSpeciesBtnEl.textContent = "Mostrar";
+            } else {
+                speciesManagerEl.style.display = "block";
+                toggleSpeciesBtnEl.textContent = "Ocultar";
+            }
+        }
+
+        // Adicionar nova espécie
+        function addSpecies() {
+            var newSpeciesName = newSpeciesEl.value.trim();
+            
+            if (!newSpeciesName) {
+                showStatus("Digite um nome para a espécie");
+                return;
+            }
+            
+            if (speciesList.includes(newSpeciesName)) {
+                showStatus("Esta espécie já existe");
+                return;
+            }
+            
+            speciesList.push(newSpeciesName);
+            window.localStorage.setItem("bioSpecies", JSON.stringify(speciesList));
+            
+            newSpeciesEl.value = "";
+            updateSpeciesList();
+            
+            showStatus("Espécie adicionada com sucesso!");
+        }
+
+        // Remover espécie
+        function removeSpecies(speciesName) {
+            var index = speciesList.indexOf(speciesName);
+            if (index !== -1) {
+                if (confirm("Tem certeza que deseja remover a espécie '" + speciesName + "'?")) {
+                    speciesList.splice(index, 1);
+                    window.localStorage.setItem("bioSpecies", JSON.stringify(speciesList));
+                    updateSpeciesList();
+                    showStatus("Espécie removida com sucesso!");
+                }
+            }
+        }
+
+        // Atualizar lista de espécies no gerenciador
+        function updateSpeciesList() {
+            if (!speciesListEl) {
+                console.error("Elemento da lista de espécies não encontrado");
+                return;
+            }
+            
+            speciesListEl.innerHTML = "";
+            
+            if (speciesList.length === 0) {
+                speciesListEl.innerHTML = "<p>Nenhuma espécie cadastrada</p>";
+                return;
+            }
+            
+            for (var i = 0; i < speciesList.length; i++) {
+                var speciesName = speciesList[i];
+                
+                var div = document.createElement("div");
+                div.className = "species-item";
+                div.innerHTML = 
+                    "<span>" + speciesName + "</span>" +
+                    "<button class='red-btn delete-species-btn' data-species='" + speciesName + "'>Remover</button>";
+                
+                speciesListEl.appendChild(div);
+            }
+            
+            // Adicionar eventos aos botões de remoção
+            var deleteButtons = document.querySelectorAll('.delete-species-btn');
+            deleteButtons.forEach(function(button) {
+                button.addEventListener('click', function() {
+                    var speciesName = this.getAttribute('data-species');
+                    removeSpecies(speciesName);
+                });
+            });
+        }
+
+        // Preencher dropdown de espécies
+        function populateSpeciesDropdowns() {
+            // Limpar dropdowns
+            speciesSelectEl.innerHTML = "<option value=''>Selecione uma espécie</option>";
+            document.getElementById('editSpeciesInput').innerHTML = "<option value=''>Selecione uma espécie</option>";
+            
+            // Preencher com espécies atualizadas
+            speciesList.forEach(function(species) {
+                var option = document.createElement("option");
+                option.value = species;
+                option.textContent = species;
+                speciesSelectEl.appendChild(option);
+                
+                var editOption = option.cloneNode(true);
+                document.getElementById('editSpeciesInput').appendChild(editOption);
+            });
+        }
+
+        // Alternar exibição do Google Maps
+        function toggleGoogleMaps() {
+            if (mapsContainerEl.style.display === "block") {
+                mapsContainerEl.style.display = "none";
+            } else {
+                mapsContainerEl.style.display = "block";
+                mapsLatInputEl.value = "";
+                mapsLngInputEl.value = "";
+                
+                // Fechar outros painéis de localização
+                manualCoordsEl.style.display = "none";
+                manualBtnEl.textContent = "Inserir Coordenadas Manualmente";
+                locationHelpEl.style.display = "none";
+            }
+        }
+
+        // Salvar coordenadas do Google Maps
+        function saveMapsCoords() {
+            var lat = parseFloat(mapsLatInputEl.value);
+            var lng = parseFloat(mapsLngInputEl.value);
+            
+            if (isNaN(lat) || isNaN(lng)) {
+                showStatus("Digite valores válidos para latitude e longitude");
+                return;
+            }
+            
+            if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+                showStatus("Coordenadas fora dos limites válidos");
+                return;
+            }
+            
+            currentLocation = {
+                latitude: lat,
+                longitude: lng,
+                accuracy: 0, // Precisão desconhecida para coordenadas manuais
+                timestamp: new Date().toISOString()
+            };
+            
+            showStatus("Coordenadas do Google Maps salvas!");
+            mapsContainerEl.style.display = "none";
         }
 
         // Mostrar mensagem de status
@@ -358,6 +1260,23 @@
                 showStatus("Projeto criado: " + name);
             } catch (e) {
                 showStatus("ERRO ao criar projeto: " + e.message);
+            }
+        }
+
+        // Excluir projeto
+        function deleteProject() {
+            if (!currentProject) {
+                showStatus("Selecione um projeto para excluir");
+                return;
+            }
+            
+            if (confirm("Tem certeza que deseja excluir o projeto '" + currentProject + "'?")) {
+                delete projects[currentProject];
+                window.localStorage.setItem("bioProjects", JSON.stringify(projects));
+                currentProject = null;
+                updateProjectList();
+                dataListEl.innerHTML = "";
+                showStatus("Projeto excluído com sucesso!");
             }
         }
 
@@ -616,14 +1535,37 @@
                 return;
             }
             
+            var species = speciesInputEl.value.trim();
+            var abundance = parseInt(abundanceEl.value);
             var notes = notesEl.value.trim();
-            if (!notes) {
-                showStatus("Digite uma observação");
+            
+            if (!species) {
+                showStatus("Digite uma espécie");
                 return;
             }
             
+            // Verificar se a espécie existe na lista
+            if (!speciesList.includes(species)) {
+                if (confirm("A espécie '" + species + "' não está na lista. Deseja adicioná-la?")) {
+                    speciesList.push(species);
+                    window.localStorage.setItem("bioSpecies", JSON.stringify(speciesList));
+                    updateSpeciesList();
+                } else {
+                    return;
+                }
+            }
+            
+            if (isNaN(abundance) || abundance < 0) {
+                showStatus("Digite uma abundância válida");
+                return;
+            }
+            
+            // Remover validação de observação obrigatória
+            
             try {
                 var newData = {
+                    species: species,
+                    abundance: abundance,
                     latitude: currentLocation.latitude,
                     longitude: currentLocation.longitude,
                     accuracy: currentLocation.accuracy || 0,
@@ -635,6 +1577,9 @@
                 projects[currentProject].data.push(newData);
                 window.localStorage.setItem("bioProjects", JSON.stringify(projects));
                 
+                speciesInputEl.value = "";
+                selectedSpecies = "";
+                abundanceEl.value = "";
                 notesEl.value = "";
                 currentLocation = null;
                 showData();
@@ -664,14 +1609,141 @@
                 
                 var div = document.createElement("div");
                 div.className = "item";
+                div.dataset.index = i;
                 div.innerHTML = 
+                    "<div class='coords'>Espécie: " + item.species + " | Abundância: " + item.abundance + "</div>" +
                     "<div class='coords'>Lat: " + item.latitude.toFixed(6) + 
                     " | Long: " + item.longitude.toFixed(6) + 
                     accuracyText + isManual + "</div>" +
                     "<div class='notes'>" + item.observation + "</div>" +
-                    "<div class='coords'>" + date.toLocaleString() + "</div>";
+                    "<div class='coords'>" + date.toLocaleString() + "</div>" +
+                    "<div class='action-buttons'>" +
+                    "<button class='edit-btn orange-btn'>Editar</button>" +
+                    "<button class='delete-btn red-btn'>Excluir</button>" +
+                    "</div>";
                 
                 dataListEl.appendChild(div);
+            }
+            
+            // Adicionar eventos de edição e exclusão
+            var editButtons = document.querySelectorAll('.edit-btn');
+            var deleteButtons = document.querySelectorAll('.delete-btn');
+            
+            editButtons.forEach(function(button) {
+                button.addEventListener('click', function() {
+                    var itemDiv = this.parentNode.parentNode;
+                    var index = parseInt(itemDiv.dataset.index);
+                    openEditModal(index);
+                });
+            });
+            
+            deleteButtons.forEach(function(button) {
+                button.addEventListener('click', function() {
+                    var itemDiv = this.parentNode.parentNode;
+                    var index = parseInt(itemDiv.dataset.index);
+                    deleteRecord(index);
+                });
+            });
+        }
+        
+        // Abrir modal de edição
+        function openEditModal(index) {
+            var item = projects[currentProject].data[index];
+            
+            // Preencher o modal com os dados atuais
+            document.getElementById('editSpeciesInput').value = item.species;
+            document.getElementById('editAbundance').value = item.abundance;
+            document.getElementById('editNotes').value = item.observation;
+            document.getElementById('editLat').value = item.latitude;
+            document.getElementById('editLng').value = item.longitude;
+            
+            // Armazenar o índice atual para uso posterior
+            document.getElementById('editModal').dataset.currentIndex = index;
+            
+            // Mostrar o modal
+            document.getElementById('editModal').style.display = 'block';
+        }
+        
+        // Salvar edições
+        function saveEdit() {
+            var index = parseInt(document.getElementById('editModal').dataset.currentIndex);
+            var item = projects[currentProject].data[index];
+            
+            // Obter novos valores
+            var newSpecies = document.getElementById('editSpeciesInput').value.trim();
+            var newAbundance = parseInt(document.getElementById('editAbundance').value);
+            var newObservation = document.getElementById('editNotes').value.trim();
+            var newLat = parseFloat(document.getElementById('editLat').value);
+            var newLng = parseFloat(document.getElementById('editLng').value);
+            
+            // Validar
+            if (!newSpecies) {
+                showStatus("Digite uma espécie");
+                return;
+            }
+            
+            // Verificar se a espécie existe na lista
+            if (!speciesList.includes(newSpecies)) {
+                if (confirm("A espécie '" + newSpecies + "' não está na lista. Deseja adicioná-la?")) {
+                    speciesList.push(newSpecies);
+                    window.localStorage.setItem("bioSpecies", JSON.stringify(speciesList));
+                    updateSpeciesList();
+                } else {
+                    return;
+                }
+            }
+            
+            if (isNaN(newAbundance) || newAbundance < 0) {
+                showStatus("Digite uma abundância válida");
+                return;
+            }
+            
+            if (!newObservation) {
+                showStatus("A observação não pode estar vazia");
+                return;
+            }
+            
+            if (isNaN(newLat) || isNaN(newLng) || newLat < -90 || newLat > 90 || newLng < -180 || newLng > 180) {
+                showStatus("Coordenadas inválidas");
+                return;
+            }
+            
+            // Atualizar o item
+            item.species = newSpecies;
+            item.abundance = newAbundance;
+            item.observation = newObservation;
+            item.latitude = newLat;
+            item.longitude = newLng;
+            
+            // Se as coordenadas foram alteradas, marcar como editado manualmente
+            if (newLat !== item.latitude || newLng !== item.longitude) {
+                item.manual = true;
+                item.accuracy = 0;
+            }
+            
+            // Salvar no localStorage
+            window.localStorage.setItem("bioProjects", JSON.stringify(projects));
+            
+            // Fechar o modal
+            document.getElementById('editModal').style.display = 'none';
+            
+            // Atualizar a visualização
+            showData();
+            showStatus("Registro atualizado com sucesso!");
+        }
+        
+        // Excluir registro
+        function deleteRecord(index) {
+            if (confirm("Tem certeza que deseja excluir este registro?")) {
+                // Remover o item do array
+                projects[currentProject].data.splice(index, 1);
+                
+                // Salvar no localStorage
+                window.localStorage.setItem("bioProjects", JSON.stringify(projects));
+                
+                // Atualizar a visualização
+                showData();
+                showStatus("Registro excluído com sucesso!");
             }
         }
 
@@ -689,22 +1761,26 @@
             }
             
             try {
-                // Verificar se a biblioteca SheetJS está disponível
                 if (typeof XLSX === 'undefined') {
                     showStatus("Biblioteca XLSX não carregada. Tentando exportar CSV...");
                     exportCSV();
                     return;
                 }
                 
-                // Preparar dados para Excel
-                var excelData = [];
+                // Criar workbook
+                var wb = XLSX.utils.book_new();
                 
+                // Planilha de dados brutos
+                var excelData = [];
                 for (var i = 0; i < data.length; i++) {
                     var item = data[i];
                     var date = new Date(item.timestamp);
                     
                     excelData.push({
+                        'Projeto': currentProject,
                         'Data/Hora': date.toLocaleString(),
+                        'Espécie': item.species,
+                        'Abundância': item.abundance,
                         'Latitude': item.latitude,
                         'Longitude': item.longitude,
                         'Precisão (m)': item.accuracy || 0,
@@ -712,13 +1788,45 @@
                         'Observação': item.observation
                     });
                 }
-                
-                // Criar um workbook
-                var wb = XLSX.utils.book_new();
                 var ws = XLSX.utils.json_to_sheet(excelData);
-                
-                // Adicionar worksheet ao workbook
                 XLSX.utils.book_append_sheet(wb, ws, "Dados");
+                
+                // Análises descritivas por espécie
+                const stats = calculateStats(data);
+                const statsData = [];
+                for (let species in stats) {
+                    statsData.push({
+                        'Espécie': species,
+                        'Abundância Total': stats[species].sum,
+                        'Número de Registros': stats[species].count,
+                        'Abundância Média': stats[species].mean.toFixed(2),
+                        'Abundância Mediana': stats[species].median.toFixed(2),
+                        'Abundância Mínima': stats[species].min,
+                        'Abundância Máxima': stats[species].max,
+                        'Desvio Padrão': calculateStdDev(stats[species].values).toFixed(2),
+                        'Frequência Relativa (%)': ((stats[species].count / data.length) * 100).toFixed(2)
+                    });
+                }
+                var wsStats = XLSX.utils.json_to_sheet(statsData);
+                XLSX.utils.book_append_sheet(wb, wsStats, "Análise por Espécie");
+                
+                // Métricas de biodiversidade
+                const biodivMetrics = calculateBiodiversityMetrics(data);
+                const metricsData = [
+                    { 'Métrica': 'Riqueza de Espécies', 'Valor': biodivMetrics.richness },
+                    { 'Métrica': 'Índice de Shannon (H\')', 'Valor': biodivMetrics.shannon.toFixed(4) },
+                    { 'Métrica': 'Equitabilidade de Pielou (J\')', 'Valor': biodivMetrics.evenness.toFixed(4) },
+                    { 'Métrica': 'Índice de Simpson (D)', 'Valor': biodivMetrics.simpson.toFixed(4) },
+                    { 'Métrica': 'Total de Indivíduos', 'Valor': biodivMetrics.totalIndividuals },
+                    { 'Métrica': 'Número Total de Registros', 'Valor': data.length }
+                ];
+                var wsMetrics = XLSX.utils.json_to_sheet(metricsData);
+                XLSX.utils.book_append_sheet(wb, wsMetrics, "Métricas de Biodiversidade");
+                
+                // Análise temporal
+                const temporalData = calculateTemporalAnalysis(data);
+                var wsTemp = XLSX.utils.json_to_sheet(temporalData);
+                XLSX.utils.book_append_sheet(wb, wsTemp, "Análise Temporal");
                 
                 // Gerar arquivo e fazer download
                 var filename = currentProject + "_dados_" + 
@@ -730,9 +1838,93 @@
             } catch (e) {
                 showStatus("ERRO ao exportar Excel: " + e.message + ". Tentando CSV...");
                 logDiagnostic("Erro Excel: " + e.message);
-                // Tentar exportação CSV como fallback
                 setTimeout(exportCSV, 1000);
             }
+        }
+
+        // Função para calcular desvio padrão
+        function calculateStdDev(values) {
+            const mean = values.reduce((a, b) => a + b) / values.length;
+            const squareDiffs = values.map(value => Math.pow(value - mean, 2));
+            const variance = squareDiffs.reduce((a, b) => a + b) / values.length;
+            return Math.sqrt(variance);
+        }
+
+        // Função para calcular métricas de biodiversidade
+        function calculateBiodiversityMetrics(data) {
+            // Contagem por espécie
+            const speciesCounts = {};
+            let totalIndividuals = 0;
+            
+            data.forEach(item => {
+                if (!speciesCounts[item.species]) {
+                    speciesCounts[item.species] = 0;
+                }
+                speciesCounts[item.species] += item.abundance;
+                totalIndividuals += item.abundance;
+            });
+            
+            const richness = Object.keys(speciesCounts).length;
+            
+            // Índice de Shannon
+            let shannon = 0;
+            for (let species in speciesCounts) {
+                const pi = speciesCounts[species] / totalIndividuals;
+                shannon -= pi * Math.log(pi);
+            }
+            
+            // Equitabilidade de Pielou
+            const maxShannon = Math.log(richness);
+            const evenness = shannon / maxShannon;
+            
+            // Índice de Simpson
+            let simpson = 0;
+            for (let species in speciesCounts) {
+                const pi = speciesCounts[species] / totalIndividuals;
+                simpson += pi * pi;
+            }
+            
+            return {
+                richness,
+                shannon,
+                evenness,
+                simpson,
+                totalIndividuals
+            };
+        }
+
+        // Função para análise temporal
+        function calculateTemporalAnalysis(data) {
+            const temporalData = [];
+            const dateGroups = {};
+            
+            // Agrupar dados por data
+            data.forEach(item => {
+                const date = new Date(item.timestamp).toLocaleDateString();
+                if (!dateGroups[date]) {
+                    dateGroups[date] = {
+                        registros: 0,
+                        especies: new Set(),
+                        abundanciaTotal: 0
+                    };
+                }
+                dateGroups[date].registros++;
+                dateGroups[date].especies.add(item.species);
+                dateGroups[date].abundanciaTotal += item.abundance;
+            });
+            
+            // Converter para formato de tabela
+            for (let date in dateGroups) {
+                temporalData.push({
+                    'Data': date,
+                    'Número de Registros': dateGroups[date].registros,
+                    'Número de Espécies': dateGroups[date].especies.size,
+                    'Abundância Total': dateGroups[date].abundanciaTotal,
+                    'Média de Indivíduos por Registro': (dateGroups[date].abundanciaTotal / dateGroups[date].registros).toFixed(2)
+                });
+            }
+            
+            return temporalData;
         }
         
         // Exportar para CSV (fallback se Excel falhar)
@@ -743,12 +1935,14 @@
             if (data.length === 0) return;
             
             try {
-                var csv = "Data/Hora,Latitude,Longitude,Precisão (m),Método,Observação\n";
+                var csv = "Data/Hora,Espécie,Abundância,Latitude,Longitude,Precisão (m),Método,Observação\n";
                 
                 for (var i = 0; i < data.length; i++) {
                     var item = data[i];
                     var date = new Date(item.timestamp).toLocaleString();
                     csv += date + "," + 
+                           item.species + "," + 
+                           item.abundance + "," + 
                            item.latitude + "," + 
                            item.longitude + "," + 
                            (item.accuracy || 0) + "," + 
@@ -774,8 +1968,546 @@
             }
         }
 
+        // Verificar suporte à geolocalização
+        function checkGeolocationSupport() {
+            if (!navigator.geolocation) {
+                logDiagnostic("Geolocalização não suportada neste navegador");
+                showStatus("Seu navegador não suporta geolocalização");
+                return false;
+            }
+            
+            logDiagnostic("Geolocalização suportada");
+            return true;
+        }
+
+        // Verificar se a biblioteca XLSX está disponível e carregá-la se necessário
+        function checkAndLoadXLSX() {
+            if (typeof XLSX === 'undefined') {
+                console.log("Biblioteca XLSX não encontrada, tentando carregar...");
+                
+                var script = document.createElement('script');
+                script.src = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
+                script.async = true;
+                script.onload = function() {
+                    console.log("Biblioteca XLSX carregada com sucesso!");
+                    logDiagnostic("Biblioteca XLSX carregada com sucesso!");
+                };
+                script.onerror = function() {
+                    console.error("Falha ao carregar biblioteca XLSX");
+                    logDiagnostic("Falha ao carregar biblioteca XLSX");
+                };
+                
+                document.head.appendChild(script);
+            } else {
+                console.log("Biblioteca XLSX já está disponível");
+            }
+        }
+
+        // Chamar a função de verificação após o carregamento da página
+        window.addEventListener('load', checkAndLoadXLSX);
+
+        // Função para inicializar o autocomplete
+        function initAutocomplete() {
+            // Autocomplete para o formulário principal
+            speciesInputEl.addEventListener('input', handleInput);
+            speciesInputEl.addEventListener('focus', handleFocus);
+            speciesInputEl.addEventListener('keydown', handleKeydown);
+
+            // Autocomplete para o modal de edição
+            var editSpeciesInputEl = document.getElementById('editSpeciesInput');
+            var editSpeciesSuggestionsEl = document.getElementById('editSpeciesSuggestions');
+            
+            if (editSpeciesInputEl && editSpeciesSuggestionsEl) {
+                editSpeciesInputEl.addEventListener('input', function(e) {
+                    handleInput.call(this, e, editSpeciesSuggestionsEl);
+                });
+                
+                editSpeciesInputEl.addEventListener('focus', function(e) {
+                    handleFocus.call(this, e, editSpeciesSuggestionsEl);
+                });
+                
+                editSpeciesInputEl.addEventListener('keydown', function(e) {
+                    handleKeydown.call(this, e, editSpeciesSuggestionsEl);
+                });
+                
+                // Fechar sugestões ao clicar fora
+                document.addEventListener('click', function(e) {
+                    if (!editSpeciesInputEl.contains(e.target) && !editSpeciesSuggestionsEl.contains(e.target)) {
+                        editSpeciesSuggestionsEl.style.display = 'none';
+                    }
+                });
+            }
+
+            // Fechar sugestões ao clicar fora (formulário principal)
+            document.addEventListener('click', function(e) {
+                if (!speciesInputEl.contains(e.target) && !speciesSuggestionsEl.contains(e.target)) {
+                    speciesSuggestionsEl.style.display = 'none';
+                }
+            });
+        }
+
+        // Função para lidar com input
+        function handleInput(e, suggestionsEl = speciesSuggestionsEl) {
+            const query = this.value.toLowerCase();
+            if (query.length < 1) {
+                suggestionsEl.style.display = 'none';
+                return;
+            }
+
+            const suggestions = speciesList.filter(species => 
+                species.toLowerCase().includes(query)
+            );
+
+            if (suggestions.length > 0) {
+                showSuggestions(suggestions, query, suggestionsEl, this);
+            } else {
+                suggestionsEl.style.display = 'none';
+            }
+        }
+
+        // Função para lidar com focus
+        function handleFocus(e, suggestionsEl = speciesSuggestionsEl) {
+            if (this.value.length > 0) {
+                const query = this.value.toLowerCase();
+                const suggestions = speciesList.filter(species => 
+                    species.toLowerCase().includes(query)
+                );
+                if (suggestions.length > 0) {
+                    showSuggestions(suggestions, query, suggestionsEl, this);
+                }
+            }
+        }
+
+        // Função para lidar com keydown
+        function handleKeydown(e, suggestionsEl = speciesSuggestionsEl) {
+            const suggestions = suggestionsEl.children;
+            let selectedIndex = -1;
+
+            for (let i = 0; i < suggestions.length; i++) {
+                if (suggestions[i].classList.contains('selected')) {
+                    selectedIndex = i;
+                    break;
+                }
+            }
+
+            switch (e.key) {
+                case 'ArrowDown':
+                    e.preventDefault();
+                    if (suggestionsEl.style.display === 'none') {
+                        const query = this.value.toLowerCase();
+                        const suggestions = speciesList.filter(species => 
+                            species.toLowerCase().includes(query)
+                        );
+                        if (suggestions.length > 0) {
+                            showSuggestions(suggestions, query, suggestionsEl, this);
+                        }
+                    } else {
+                        if (selectedIndex < suggestions.length - 1) {
+                            if (selectedIndex >= 0) {
+                                suggestions[selectedIndex].classList.remove('selected');
+                            }
+                            suggestions[selectedIndex + 1].classList.add('selected');
+                            suggestions[selectedIndex + 1].scrollIntoView({ block: 'nearest' });
+                        }
+                    }
+                    break;
+                case 'ArrowUp':
+                    e.preventDefault();
+                    if (selectedIndex > 0) {
+                        suggestions[selectedIndex].classList.remove('selected');
+                        suggestions[selectedIndex - 1].classList.add('selected');
+                        suggestions[selectedIndex - 1].scrollIntoView({ block: 'nearest' });
+                    }
+                    break;
+                case 'Enter':
+                    e.preventDefault();
+                    if (selectedIndex >= 0) {
+                        selectSpecies(suggestions[selectedIndex].textContent, this, suggestionsEl);
+                    }
+                    break;
+                case 'Escape':
+                    suggestionsEl.style.display = 'none';
+                    break;
+            }
+        }
+
+        // Função para mostrar sugestões
+        function showSuggestions(suggestions, query, suggestionsEl = speciesSuggestionsEl, inputEl = speciesInputEl) {
+            suggestionsEl.innerHTML = '';
+            suggestions.forEach(species => {
+                const div = document.createElement('div');
+                div.className = 'species-suggestion';
+                
+                // Destacar parte do texto que corresponde à busca
+                const index = species.toLowerCase().indexOf(query.toLowerCase());
+                if (index >= 0) {
+                    const before = species.substring(0, index);
+                    const match = species.substring(index, index + query.length);
+                    const after = species.substring(index + query.length);
+                    div.innerHTML = before + '<span class="highlight">' + match + '</span>' + after;
+                } else {
+                    div.textContent = species;
+                }
+
+                div.addEventListener('click', function() {
+                    selectSpecies(species, inputEl, suggestionsEl);
+                });
+                suggestionsEl.appendChild(div);
+            });
+            suggestionsEl.style.display = 'block';
+        }
+
+        // Função para selecionar uma espécie
+        function selectSpecies(species, inputEl = speciesInputEl, suggestionsEl = speciesSuggestionsEl) {
+            inputEl.value = species;
+            if (inputEl === speciesInputEl) {
+                selectedSpecies = species;
+            }
+            suggestionsEl.style.display = 'none';
+        }
+
+        // Função para alternar cards
+        function toggleCard(cardId) {
+            var content = document.getElementById(cardId);
+            if (content.style.display === "block") {
+                content.style.display = "none";
+            } else {
+                content.style.display = "block";
+            }
+        }
+
         // Iniciar após o carregamento
         window.onload = init;
+
+        // Função para calcular estatísticas
+        function calculateStats(data) {
+            let stats = {};
+            
+            // Agrupar dados por espécie
+            data.forEach(item => {
+                if (!stats[item.species]) {
+                    stats[item.species] = {
+                        values: [],
+                        count: 0,
+                        sum: 0,
+                        mean: 0,
+                        median: 0,
+                        min: Infinity,
+                        max: -Infinity,
+                        q1: 0,
+                        q3: 0
+                    };
+                }
+                
+                stats[item.species].values.push(item.abundance);
+                stats[item.species].count++;
+                stats[item.species].sum += item.abundance;
+                stats[item.species].min = Math.min(stats[item.species].min, item.abundance);
+                stats[item.species].max = Math.max(stats[item.species].max, item.abundance);
+            });
+            
+            // Calcular estatísticas para cada espécie
+            for (let species in stats) {
+                let values = stats[species].values.sort((a, b) => a - b);
+                stats[species].mean = stats[species].sum / stats[species].count;
+                stats[species].median = calculateMedian(values);
+                stats[species].q1 = calculateQuantile(values, 0.25);
+                stats[species].q3 = calculateQuantile(values, 0.75);
+            }
+            
+            return stats;
+        }
+        
+        // Função para calcular mediana
+        function calculateMedian(values) {
+            const mid = Math.floor(values.length / 2);
+            return values.length % 2 === 0 ? (values[mid - 1] + values[mid]) / 2 : values[mid];
+        }
+        
+        // Função para calcular quartis
+        function calculateQuantile(values, q) {
+            const pos = (values.length - 1) * q;
+            const base = Math.floor(pos);
+            const rest = pos - base;
+            if (values[base + 1] !== undefined) {
+                return values[base] + rest * (values[base + 1] - values[base]);
+            } else {
+                return values[base];
+            }
+        }
+        
+        // Função para atualizar visualizações
+        function updateVisualizations() {
+            if (!currentProject || !projects[currentProject].data.length) {
+                document.getElementById('statsCard').innerHTML = '<p>Nenhum dado disponível para análise</p>';
+                return;
+            }
+            
+            const stats = calculateStats(projects[currentProject].data);
+            updateStatsTable(stats);
+            updateBoxplot(stats);
+        }
+        
+        // Função para atualizar tabela de estatísticas
+        function updateStatsTable(stats) {
+            const table = document.createElement('table');
+            table.className = 'stats-table';
+            
+            // Cabeçalho
+            const thead = document.createElement('thead');
+            thead.innerHTML = `
+                <tr>
+                    <th>Espécie</th>
+                    <th>Contagem</th>
+                    <th>Média</th>
+                    <th>Mediana</th>
+                    <th>Mínimo</th>
+                    <th>Máximo</th>
+                    <th>Q1</th>
+                    <th>Q3</th>
+                </tr>
+            `;
+            table.appendChild(thead);
+            
+            // Corpo da tabela
+            const tbody = document.createElement('tbody');
+            for (let species in stats) {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${species}</td>
+                    <td>${stats[species].count}</td>
+                    <td>${stats[species].mean.toFixed(2)}</td>
+                    <td>${stats[species].median.toFixed(2)}</td>
+                    <td>${stats[species].min}</td>
+                    <td>${stats[species].max}</td>
+                    <td>${stats[species].q1.toFixed(2)}</td>
+                    <td>${stats[species].q3.toFixed(2)}</td>
+                `;
+                tbody.appendChild(row);
+            }
+            table.appendChild(tbody);
+            
+            document.getElementById('statsTable').innerHTML = '';
+            document.getElementById('statsTable').appendChild(table);
+        }
+        
+        // Função para atualizar boxplot
+        function updateBoxplot(stats) {
+            const ctx = document.getElementById('boxplotChart').getContext('2d');
+            
+            // Destruir gráfico anterior se existir
+            if (window.boxplotChart) {
+                window.boxplotChart.destroy();
+            }
+            
+            const datasets = [];
+            const labels = Object.keys(stats);
+            
+            // Preparar dados para o boxplot
+            const data = labels.map(species => ({
+                min: stats[species].min,
+                q1: stats[species].q1,
+                median: stats[species].median,
+                q3: stats[species].q3,
+                max: stats[species].max
+            }));
+            
+            window.boxplotChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Abundância',
+                        data: data.map(d => [d.min, d.q1, d.median, d.q3, d.max]),
+                        backgroundColor: 'rgba(66, 133, 244, 0.5)',
+                        borderColor: 'rgb(66, 133, 244)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Distribuição de Abundância por Espécie'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Abundância'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Função para abrir o modal de exportação múltipla
+        function openExportModal() {
+            const modal = document.getElementById('exportModal');
+            const projectList = document.getElementById('projectList');
+            projectList.innerHTML = '';
+
+            // Criar checkboxes para cada projeto
+            for (let projectName in projects) {
+                const div = document.createElement('div');
+                div.style.marginBottom = '10px';
+                
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.id = 'project_' + projectName;
+                checkbox.value = projectName;
+                checkbox.style.marginRight = '10px';
+                
+                const label = document.createElement('label');
+                label.htmlFor = 'project_' + projectName;
+                label.textContent = projectName;
+                
+                div.appendChild(checkbox);
+                div.appendChild(label);
+                projectList.appendChild(div);
+            }
+
+            modal.style.display = 'block';
+        }
+
+        // Função para fechar o modal de exportação
+        function closeExportModal() {
+            document.getElementById('exportModal').style.display = 'none';
+        }
+
+        // Função para exportar múltiplos projetos
+        function exportMultipleProjects() {
+            const selectedProjects = [];
+            const checkboxes = document.querySelectorAll('#projectList input[type="checkbox"]');
+            
+            checkboxes.forEach(checkbox => {
+                if (checkbox.checked) {
+                    selectedProjects.push(checkbox.value);
+                }
+            });
+
+            if (selectedProjects.length === 0) {
+                showStatus("Selecione pelo menos um projeto");
+                return;
+            }
+
+            try {
+                if (typeof XLSX === 'undefined') {
+                    showStatus("Biblioteca XLSX não carregada. Tentando exportar CSV...");
+                    return;
+                }
+
+                // Criar workbook
+                const wb = XLSX.utils.book_new();
+                
+                // Combinar dados de todos os projetos selecionados
+                const allData = [];
+                selectedProjects.forEach(projectName => {
+                    const projectData = projects[projectName].data;
+                    projectData.forEach(item => {
+                        const date = new Date(item.timestamp);
+                        allData.push({
+                            'Projeto': projectName,
+                            'Data/Hora': date.toLocaleString(),
+                            'Espécie': item.species,
+                            'Abundância': item.abundance,
+                            'Latitude': item.latitude,
+                            'Longitude': item.longitude,
+                            'Precisão (m)': item.accuracy || 0,
+                            'Método': item.manual ? "Manual" : "GPS",
+                            'Observação': item.observation
+                        });
+                    });
+                });
+
+                // Planilha de dados brutos
+                const ws = XLSX.utils.json_to_sheet(allData);
+                XLSX.utils.book_append_sheet(wb, ws, "Dados");
+
+                // Análises descritivas por espécie (considerando todos os projetos)
+                const stats = calculateStats(allData.map(item => ({
+                    species: item.Espécie,
+                    abundance: item.Abundância
+                })));
+                const statsData = [];
+                for (let species in stats) {
+                    statsData.push({
+                        'Espécie': species,
+                        'Abundância Total': stats[species].sum,
+                        'Número de Registros': stats[species].count,
+                        'Abundância Média': stats[species].mean.toFixed(2),
+                        'Abundância Mediana': stats[species].median.toFixed(2),
+                        'Abundância Mínima': stats[species].min,
+                        'Abundância Máxima': stats[species].max,
+                        'Desvio Padrão': calculateStdDev(stats[species].values).toFixed(2),
+                        'Frequência Relativa (%)': ((stats[species].count / allData.length) * 100).toFixed(2)
+                    });
+                }
+                const wsStats = XLSX.utils.json_to_sheet(statsData);
+                XLSX.utils.book_append_sheet(wb, wsStats, "Análise por Espécie");
+
+                // Métricas de biodiversidade (total e por projeto)
+                const biodivMetrics = calculateBiodiversityMetrics(allData.map(item => ({
+                    species: item.Espécie,
+                    abundance: item.Abundância
+                })));
+                const metricsData = [
+                    { 'Projeto': 'TOTAL', 'Métrica': 'Riqueza de Espécies', 'Valor': biodivMetrics.richness },
+                    { 'Projeto': 'TOTAL', 'Métrica': 'Índice de Shannon (H\')', 'Valor': biodivMetrics.shannon.toFixed(4) },
+                    { 'Projeto': 'TOTAL', 'Métrica': 'Equitabilidade de Pielou (J\')', 'Valor': biodivMetrics.evenness.toFixed(4) },
+                    { 'Projeto': 'TOTAL', 'Métrica': 'Índice de Simpson (D)', 'Valor': biodivMetrics.simpson.toFixed(4) },
+                    { 'Projeto': 'TOTAL', 'Métrica': 'Total de Indivíduos', 'Valor': biodivMetrics.totalIndividuals },
+                    { 'Projeto': 'TOTAL', 'Métrica': 'Número Total de Registros', 'Valor': allData.length }
+                ];
+
+                // Adicionar métricas por projeto
+                selectedProjects.forEach(projectName => {
+                    const projectData = allData.filter(item => item.Projeto === projectName)
+                        .map(item => ({
+                            species: item.Espécie,
+                            abundance: item.Abundância
+                        }));
+                    const projectMetrics = calculateBiodiversityMetrics(projectData);
+                    metricsData.push(
+                        { 'Projeto': projectName, 'Métrica': 'Riqueza de Espécies', 'Valor': projectMetrics.richness },
+                        { 'Projeto': projectName, 'Métrica': 'Índice de Shannon (H\')', 'Valor': projectMetrics.shannon.toFixed(4) },
+                        { 'Projeto': projectName, 'Métrica': 'Equitabilidade de Pielou (J\')', 'Valor': projectMetrics.evenness.toFixed(4) },
+                        { 'Projeto': projectName, 'Métrica': 'Índice de Simpson (D)', 'Valor': projectMetrics.simpson.toFixed(4) },
+                        { 'Projeto': projectName, 'Métrica': 'Total de Indivíduos', 'Valor': projectMetrics.totalIndividuals },
+                        { 'Projeto': projectName, 'Métrica': 'Número Total de Registros', 'Valor': projectData.length }
+                    );
+                });
+
+                const wsMetrics = XLSX.utils.json_to_sheet(metricsData);
+                XLSX.utils.book_append_sheet(wb, wsMetrics, "Métricas de Biodiversidade");
+
+                // Análise temporal
+                const temporalData = calculateTemporalAnalysis(allData.map(item => ({
+                    species: item.Espécie,
+                    abundance: item.Abundância,
+                    timestamp: new Date(item['Data/Hora']).toISOString()
+                })));
+                const wsTemp = XLSX.utils.json_to_sheet(temporalData);
+                XLSX.utils.book_append_sheet(wb, wsTemp, "Análise Temporal");
+
+                // Gerar arquivo e fazer download
+                const filename = "BioPlan_multiplos_projetos_" + 
+                               new Date().toISOString().split('T')[0] + ".xlsx";
+                
+                XLSX.writeFile(wb, filename);
+                showStatus("Arquivo Excel exportado com sucesso!");
+                closeExportModal();
+
+            } catch (e) {
+                showStatus("ERRO ao exportar Excel: " + e.message);
+                console.error(e);
+            }
+        }
     </script>
 </body>
 </html> 
