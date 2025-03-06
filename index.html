@@ -149,6 +149,35 @@
             max-height: 100px;
             overflow-y: auto;
         }
+        .install-button {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            padding: 10px 20px;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 1000;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+            margin-top: 5px;
+        }
+        .action-buttons button {
+            padding: 3px 8px;
+            font-size: 12px;
+            margin-bottom: 0;
+        }
+        .edit-mode {
+            background-color: #fff3e0;
+            border: 1px dashed #ff9800;
+        }
     </style>
 </head>
 <body>
@@ -210,6 +239,31 @@
                 <button id="exportBtn" class="green-btn export-btn">Exportar Excel</button>
             </div>
             <div id="dataList"></div>
+        </div>
+    </div>
+
+    <!-- Modal de edição -->
+    <div id="editModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.5); z-index: 1000;">
+        <div style="background: white; max-width: 90%; width: 500px; margin: 20px auto; padding: 20px; border-radius: 8px; max-height: 90vh; overflow-y: auto;">
+            <h3 style="margin-top: 0;">Editar Registro</h3>
+            
+            <div style="margin-bottom: 15px;">
+                <label>Observação:</label>
+                <textarea id="editNotes" rows="3" style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ddd; border-radius: 4px;"></textarea>
+            </div>
+            
+            <div style="margin-bottom: 15px;">
+                <label>Coordenadas:</label>
+                <div style="display: flex; gap: 10px; margin-top: 5px;">
+                    <input type="number" id="editLat" placeholder="Latitude" step="0.000001" style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    <input type="number" id="editLng" placeholder="Longitude" step="0.000001" style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+            </div>
+            
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button id="cancelEditBtn" style="background-color: #9e9e9e; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer;">Cancelar</button>
+                <button id="saveEditBtn" style="background-color: #0f9d58; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer;">Salvar Alterações</button>
+            </div>
         </div>
     </div>
 
@@ -280,8 +334,17 @@
             saveBtnEl.onclick = saveData;
             exportBtnEl.onclick = exportExcel;
             
+            // Eventos do modal de edição
+            document.getElementById('saveEditBtn').addEventListener('click', saveEdit);
+            document.getElementById('cancelEditBtn').addEventListener('click', function() {
+                document.getElementById('editModal').style.display = 'none';
+            });
+            
             // Verificar suporte à geolocalização
             checkGeolocationSupport();
+            
+            // Verificar compatibilidade PWA e mostrar botão de instalação manual
+            checkPWACompatibility();
         }
         
         // Verificar suporte à geolocalização
@@ -664,14 +727,113 @@
                 
                 var div = document.createElement("div");
                 div.className = "item";
+                div.dataset.index = i;
                 div.innerHTML = 
                     "<div class='coords'>Lat: " + item.latitude.toFixed(6) + 
                     " | Long: " + item.longitude.toFixed(6) + 
                     accuracyText + isManual + "</div>" +
                     "<div class='notes'>" + item.observation + "</div>" +
-                    "<div class='coords'>" + date.toLocaleString() + "</div>";
+                    "<div class='coords'>" + date.toLocaleString() + "</div>" +
+                    "<div class='action-buttons'>" +
+                    "<button class='edit-btn orange-btn'>Editar</button>" +
+                    "<button class='delete-btn red-btn'>Excluir</button>" +
+                    "</div>";
                 
                 dataListEl.appendChild(div);
+            }
+            
+            // Adicionar eventos de edição e exclusão
+            var editButtons = document.querySelectorAll('.edit-btn');
+            var deleteButtons = document.querySelectorAll('.delete-btn');
+            
+            editButtons.forEach(function(button) {
+                button.addEventListener('click', function() {
+                    var itemDiv = this.parentNode.parentNode;
+                    var index = parseInt(itemDiv.dataset.index);
+                    openEditModal(index);
+                });
+            });
+            
+            deleteButtons.forEach(function(button) {
+                button.addEventListener('click', function() {
+                    var itemDiv = this.parentNode.parentNode;
+                    var index = parseInt(itemDiv.dataset.index);
+                    deleteRecord(index);
+                });
+            });
+        }
+        
+        // Abrir modal de edição
+        function openEditModal(index) {
+            var item = projects[currentProject].data[index];
+            
+            // Preencher o modal com os dados atuais
+            document.getElementById('editNotes').value = item.observation;
+            document.getElementById('editLat').value = item.latitude;
+            document.getElementById('editLng').value = item.longitude;
+            
+            // Armazenar o índice atual para uso posterior
+            document.getElementById('editModal').dataset.currentIndex = index;
+            
+            // Mostrar o modal
+            document.getElementById('editModal').style.display = 'block';
+        }
+        
+        // Salvar edições
+        function saveEdit() {
+            var index = parseInt(document.getElementById('editModal').dataset.currentIndex);
+            var item = projects[currentProject].data[index];
+            
+            // Obter novos valores
+            var newObservation = document.getElementById('editNotes').value.trim();
+            var newLat = parseFloat(document.getElementById('editLat').value);
+            var newLng = parseFloat(document.getElementById('editLng').value);
+            
+            // Validar
+            if (!newObservation) {
+                showStatus("A observação não pode estar vazia");
+                return;
+            }
+            
+            if (isNaN(newLat) || isNaN(newLng) || newLat < -90 || newLat > 90 || newLng < -180 || newLng > 180) {
+                showStatus("Coordenadas inválidas");
+                return;
+            }
+            
+            // Atualizar o item
+            item.observation = newObservation;
+            item.latitude = newLat;
+            item.longitude = newLng;
+            
+            // Se as coordenadas foram alteradas, marcar como editado manualmente
+            if (newLat !== item.latitude || newLng !== item.longitude) {
+                item.manual = true;
+                item.accuracy = 0;
+            }
+            
+            // Salvar no localStorage
+            window.localStorage.setItem("bioProjects", JSON.stringify(projects));
+            
+            // Fechar o modal
+            document.getElementById('editModal').style.display = 'none';
+            
+            // Atualizar a visualização
+            showData();
+            showStatus("Registro atualizado com sucesso!");
+        }
+        
+        // Excluir registro
+        function deleteRecord(index) {
+            if (confirm("Tem certeza que deseja excluir este registro?")) {
+                // Remover o item do array
+                projects[currentProject].data.splice(index, 1);
+                
+                // Salvar no localStorage
+                window.localStorage.setItem("bioProjects", JSON.stringify(projects));
+                
+                // Atualizar a visualização
+                showData();
+                showStatus("Registro excluído com sucesso!");
             }
         }
 
@@ -771,6 +933,44 @@
                 showStatus("Dados exportados como CSV (fallback)");
             } catch (e) {
                 showStatus("ERRO na exportação de dados: " + e.message);
+            }
+        }
+
+        // Verificar compatibilidade com PWA e mostrar botão se necessário
+        function checkPWACompatibility() {
+            // Verificar se está rodando como aplicativo instalado
+            var isInStandaloneMode = (window.matchMedia('(display-mode: standalone)').matches) || (window.navigator.standalone) || document.referrer.includes('android-app://');
+            
+            if (!isInStandaloneMode) {
+                // Mostrar botão de instalação manual
+                var installButton = document.getElementById('installButton');
+                installButton.style.display = 'block';
+                
+                // Adicionar evento de instalação manual se não houver suporte nativo
+                installButton.addEventListener('click', function() {
+                    showStatus("Para instalar: use o menu do navegador e selecione 'Adicionar à tela inicial'");
+                    
+                    // Mostrar instruções detalhadas
+                    var instructionsHtml = `
+                        <div style="background-color: #e8f5e9; padding: 15px; border-radius: 8px; margin-top: 15px;">
+                            <h3>Como instalar o aplicativo:</h3>
+                            <ol>
+                                <li>No Chrome: toque no menu (três pontos ⋮)</li>
+                                <li>Selecione "Adicionar à tela inicial" ou "Instalar aplicativo"</li>
+                                <li>Siga as instruções na tela</li>
+                            </ol>
+                            <p style="color: #0f9d58;">Após instalado, o app funcionará offline!</p>
+                        </div>
+                    `;
+                    
+                    var instructionsEl = document.createElement('div');
+                    instructionsEl.innerHTML = instructionsHtml;
+                    document.querySelector('.container').appendChild(instructionsEl);
+                    
+                    setTimeout(function() {
+                        document.querySelector('.container').removeChild(instructionsEl);
+                    }, 20000);
+                });
             }
         }
 
