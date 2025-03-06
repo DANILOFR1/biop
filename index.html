@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coleta de Dados Biológicos</title>
+    <!-- SheetJS para exportação em Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 15px;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .header {
+            font-weight: bold;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #eee;
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 4px;
+            width: 100%;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        .green-btn {
+            background-color: #0f9d58;
+        }
+        .orange-btn {
+            background-color: #ff9800;
+        }
+        .red-btn {
+            background-color: #ea4335;
+        }
+        .item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .coords {
+            color: #666;
+            font-size: 14px;
+        }
+        .notes {
+            margin: 5px 0;
+        }
+        .status {
+            margin-top: 10px;
+            padding: 8px;
+            background-color: #e8f0fe;
+            border-radius: 4px;
+            text-align: center;
+            display: none;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+        .flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .export-btn {
+            width: auto;
+            margin-left: 10px;
+        }
+        .manual-coords {
+            display: none;
+            background-color: #fffde7;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        .coord-input {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 5px;
+        }
+        .coord-input input {
+            margin-bottom: 0;
+        }
+        .helper-text {
+            color: #666;
+            font-size: 12px;
+            margin-top: -5px;
+            margin-bottom: 10px;
+        }
+        .location-help {
+            display: none;
+            background-color: #ffebee;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        .location-help ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        .location-help li {
+            margin-bottom: 5px;
+        }
+        .info-icon {
+            color: white;
+            background: #4285f4;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            display: inline-block;
+            text-align: center;
+            line-height: 18px;
+            font-size: 14px;
+            margin-right: 5px;
+            font-weight: bold;
+        }
+        .diagnostic {
+            display: none;
+            background-color: #fffde7;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            font-size: 12px;
+            max-height: 100px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Coleta de Dados Biológicos</h1>
+        
+        <div id="status" class="status"></div>
+        
+        <!-- Projetos -->
+        <div class="card">
+            <div class="header">Projetos</div>
+            <input type="text" id="projectName" placeholder="Nome do novo projeto">
+            <button id="createBtn">Criar Projeto</button>
+            <select id="projectSelect">
+                <option value="">Selecione um projeto</option>
+            </select>
+        </div>
+
+        <!-- Coleta -->
+        <div class="card">
+            <div class="header">Coleta de Dados</div>
+            <label>Observação:</label>
+            <textarea id="notes" rows="3"></textarea>
+            <button id="locationBtn" class="green-btn">Capturar Localização</button>
+            <div id="diagnostic" class="diagnostic"></div>
+            
+            <div id="locationHelp" class="location-help">
+                <p><strong>Problema ao acessar localização.</strong></p>
+                <p>Para permitir acesso à localização:</p>
+                <ul>
+                    <li>Nas configurações do Chrome: "Configurações do site" → "Localização" → Permitir</li>
+                    <li>Nas configurações do Android: "Aplicativos" → "Chrome" → "Permissões" → "Localização" → Permitir</li>
+                    <li>Ative o GPS do seu dispositivo</li>
+                    <li>Tente usar outro navegador como Firefox</li>
+                </ul>
+                <button id="tryAgainBtn" class="green-btn">Tentar Novamente</button>
+                <button id="tryAlternativeBtn" class="orange-btn">Usar Método Alternativo</button>
+                <button id="closeHelpBtn" class="red-btn">Fechar Ajuda</button>
+            </div>
+            
+            <button id="manualBtn" class="orange-btn">Inserir Coordenadas Manualmente</button>
+            
+            <div id="manualCoords" class="manual-coords">
+                <div class="coord-input">
+                    <input type="number" id="latInput" placeholder="Latitude" step="0.000001">
+                    <input type="number" id="lngInput" placeholder="Longitude" step="0.000001">
+                </div>
+                <div class="helper-text">Exemplo: Latitude -23.550520, Longitude -46.633308</div>
+                <button id="saveCoords" class="green-btn">Salvar Coordenadas</button>
+            </div>
+            
+            <button id="saveBtn">Salvar Dados</button>
+        </div>
+
+        <!-- Dados -->
+        <div class="card">
+            <div class="flex header">
+                <span>Dados Coletados</span>
+                <button id="exportBtn" class="green-btn export-btn">Exportar Excel</button>
+            </div>
+            <div id="dataList"></div>
+        </div>
+    </div>
+
+    <script>
+        // Variáveis
+        var projects = {};
+        var currentProject = null;
+        var currentLocation = null;
+        var watchId = null;
+        var locationUpdateCount = 0;
+
+        // Elementos 
+        var statusEl = document.getElementById("status");
+        var projectNameEl = document.getElementById("projectName");
+        var projectSelectEl = document.getElementById("projectSelect");
+        var createBtnEl = document.getElementById("createBtn");
+        var locationBtnEl = document.getElementById("locationBtn");
+        var diagnosticEl = document.getElementById("diagnostic");
+        var locationHelpEl = document.getElementById("locationHelp");
+        var tryAgainBtnEl = document.getElementById("tryAgainBtn");
+        var tryAlternativeBtnEl = document.getElementById("tryAlternativeBtn");
+        var closeHelpBtnEl = document.getElementById("closeHelpBtn");
+        var manualBtnEl = document.getElementById("manualBtn");
+        var manualCoordsEl = document.getElementById("manualCoords");
+        var latInputEl = document.getElementById("latInput");
+        var lngInputEl = document.getElementById("lngInput");
+        var saveCoordsEl = document.getElementById("saveCoords");
+        var notesEl = document.getElementById("notes");
+        var saveBtnEl = document.getElementById("saveBtn");
+        var exportBtnEl = document.getElementById("exportBtn");
+        var dataListEl = document.getElementById("dataList");
+
+        // Inicialização
+        function init() {
+            showStatus("Iniciando aplicativo...");
+            
+            // Carregar projetos
+            try {
+                var savedData = window.localStorage.getItem("bioProjects");
+                if (savedData) {
+                    projects = JSON.parse(savedData);
+                    updateProjectList();
+                    showStatus("Dados carregados com sucesso!");
+                } else {
+                    showStatus("Nenhum projeto encontrado. Crie um novo.");
+                }
+            } catch (e) {
+                showStatus("ERRO ao carregar dados: " + e.message);
+            }
+            
+            // Configurar eventos
+            createBtnEl.onclick = createProject;
+            projectSelectEl.onchange = loadProject;
+            locationBtnEl.onclick = captureLocation;
+            tryAgainBtnEl.onclick = function() {
+                locationHelpEl.style.display = "none";
+                captureLocation();
+            };
+            tryAlternativeBtnEl.onclick = function() {
+                locationHelpEl.style.display = "none";
+                useAlternativeLocation();
+            };
+            closeHelpBtnEl.onclick = function() {
+                locationHelpEl.style.display = "none";
+            };
+            manualBtnEl.onclick = toggleManualCoords;
+            saveCoordsEl.onclick = saveManualCoords;
+            saveBtnEl.onclick = saveData;
+            exportBtnEl.onclick = exportExcel;
+            
+            // Verificar suporte à geolocalização
+            checkGeolocationSupport();
+        }
+        
+        // Verificar suporte à geolocalização
+        function checkGeolocationSupport() {
+            if (navigator.geolocation) {
+                logDiagnostic("Geolocalização disponível");
+                // Pré-verificar permissão (se disponível no navegador)
+                if (navigator.permissions && navigator.permissions.query) {
+                    navigator.permissions.query({ name: 'geolocation' })
+                        .then(function(result) {
+                            logDiagnostic("Estado da permissão: " + result.state);
+                            if (result.state === 'denied') {
+                                showStatus("Permissão de localização negada");
+                                setTimeout(function() {
+                                    locationHelpEl.style.display = "block";
+                                }, 1500);
+                            }
+                        }).catch(function(err) {
+                            logDiagnostic("Erro ao verificar permissão: " + err.message);
+                        });
+                }
+            } else {
+                showStatus("Seu navegador não suporta geolocalização");
+                logDiagnostic("Geolocalização não suportada");
+                setTimeout(function() {
+                    manualCoordsEl.style.display = "block";
+                    manualBtnEl.textContent = "Ocultar Entrada Manual";
+                }, 1500);
+            }
+        }
+
+        // Mostrar mensagem de status
+        function showStatus(message) {
+            statusEl.style.display = "block";
+            statusEl.innerText = message;
+            setTimeout(function() {
+                statusEl.style.display = "none";
+            }, 3000);
+        }
+        
+        // Registrar diagnóstico
+        function logDiagnostic(message) {
+            var now = new Date();
+            var timestamp = now.getHours() + ':' + now.getMinutes() + ':' + now.getSeconds();
+            diagnosticEl.innerHTML += timestamp + ' - ' + message + '<br>';
+            diagnosticEl.style.display = "block";
+            diagnosticEl.scrollTop = diagnosticEl.scrollHeight;
+        }
+
+        // Criar projeto
+        function createProject() {
+            var name = projectNameEl.value.trim();
+            
+            if (!name) {
+                showStatus("Digite um nome para o projeto");
+                return;
+            }
+            
+            if (projects[name]) {
+                showStatus("Este projeto já existe");
+                return;
+            }
+            
+            try {
+                projects[name] = { data: [] };
+                window.localStorage.setItem("bioProjects", JSON.stringify(projects));
+                projectNameEl.value = "";
+                updateProjectList();
+                
+                // Selecionar o novo projeto
+                projectSelectEl.value = name;
+                currentProject = name;
+                
+                showStatus("Projeto criado: " + name);
+            } catch (e) {
+                showStatus("ERRO ao criar projeto: " + e.message);
+            }
+        }
+
+        // Atualizar lista de projetos
+        function updateProjectList() {
+            // Limpar lista
+            projectSelectEl.innerHTML = "<option value=''>Selecione um projeto</option>";
+            
+            // Adicionar projetos
+            for (var name in projects) {
+                var option = document.createElement("option");
+                option.value = name;
+                option.textContent = name;
+                projectSelectEl.appendChild(option);
+            }
+        }
+
+        // Carregar projeto selecionado
+        function loadProject() {
+            currentProject = projectSelectEl.value;
+            if (currentProject) {
+                showData();
+                showStatus("Projeto carregado: " + currentProject);
+            } else {
+                dataListEl.innerHTML = "";
+            }
+        }
+        
+        // Método alternativo de localização
+        function useAlternativeLocation() {
+            logDiagnostic("Tentando método alternativo de geolocalização");
+            
+            // Interrompendo o watch atual se houver
+            stopLocationWatch();
+            
+            locationBtnEl.disabled = true;
+            locationBtnEl.textContent = "Capturando...";
+            showStatus("Tentando método alternativo...");
+            
+            // Tentar uma abordagem diferente com menos precisão
+            var options = {
+                enableHighAccuracy: false,  // Menos precisão, maior chance de funcionar
+                timeout: 10000,
+                maximumAge: 60000  // Aceitar posições com até 1 minuto
+            };
+            
+            if (!navigator.geolocation) {
+                showStatus("Geolocalização não suportada");
+                locationBtnEl.disabled = false;
+                locationBtnEl.textContent = "Capturar Localização";
+                toggleManualCoords();
+                return;
+            }
+            
+            try {
+                watchId = navigator.geolocation.watchPosition(
+                    function(position) {
+                        locationUpdateCount++;
+                        
+                        var accuracy = position.coords.accuracy;
+                        logDiagnostic("Posição obtida #" + locationUpdateCount + " (precisão: " + Math.round(accuracy) + "m)");
+                        
+                        currentLocation = {
+                            latitude: position.coords.latitude,
+                            longitude: position.coords.longitude,
+                            accuracy: accuracy,
+                            timestamp: new Date().toISOString()
+                        };
+                        
+                        // Parar de observar após obter uma localização
+                        stopLocationWatch();
+                        
+                        locationBtnEl.disabled = false;
+                        locationBtnEl.textContent = "Capturar Localização";
+                        showStatus("Localização obtida! Precisão: " + Math.round(accuracy) + "m");
+                    },
+                    function(error) {
+                        stopLocationWatch();
+                        locationBtnEl.disabled = false;
+                        locationBtnEl.textContent = "Capturar Localização";
+                        
+                        logDiagnostic("Erro no método alternativo: " + error.code + " - " + error.message);
+                        showStatus("Método alternativo falhou. Use entrada manual.");
+                        toggleManualCoords();
+                    },
+                    options
+                );
+            } catch (e) {
+                logDiagnostic("Exceção: " + e.message);
+                locationBtnEl.disabled = false;
+                locationBtnEl.textContent = "Capturar Localização";
+                showStatus("Erro na geolocalização. Use entrada manual.");
+                toggleManualCoords();
+            }
+        }
+
+        // Capturar localização
+        function captureLocation() {
+            // Interrompendo o watch atual se houver
+            stopLocationWatch();
+            
+            if (!navigator.geolocation) {
+                showStatus("Seu navegador não suporta geolocalização");
+                toggleManualCoords();
+                return;
+            }
+            
+            locationBtnEl.disabled = true;
+            locationBtnEl.textContent = "Capturando...";
+            showStatus("Obtendo sua localização...");
+            logDiagnostic("Iniciando captura de localização");
+            
+            var options = {
+                enableHighAccuracy: true,
+                timeout: 15000,
+                maximumAge: 0
+            };
+            
+            try {
+                locationUpdateCount = 0;
+                watchId = navigator.geolocation.watchPosition(
+                    function(position) {
+                        locationUpdateCount++;
+                        
+                        var accuracy = position.coords.accuracy;
+                        logDiagnostic("Posição obtida #" + locationUpdateCount + " (precisão: " + Math.round(accuracy) + "m)");
+                        
+                        // Se já temos uma localização e a precisão não é melhor, ignorar
+                        if (currentLocation && accuracy >= currentLocation.accuracy) {
+                            return;
+                        }
+                        
+                        currentLocation = {
+                            latitude: position.coords.latitude,
+                            longitude: position.coords.longitude,
+                            accuracy: accuracy,
+                            timestamp: new Date().toISOString()
+                        };
+                        
+                        // Se a precisão for boa ou tivermos várias atualizações, parar
+                        if (accuracy < 50 || locationUpdateCount > 5) {
+                            stopLocationWatch();
+                            locationBtnEl.disabled = false;
+                            locationBtnEl.textContent = "Capturar Localização";
+                            showStatus("Localização obtida! Precisão: " + Math.round(accuracy) + "m");
+                        }
+                    },
+                    function(error) {
+                        stopLocationWatch();
+                        locationBtnEl.disabled = false;
+                        locationBtnEl.textContent = "Capturar Localização";
+                        
+                        logDiagnostic("Erro de geolocalização: " + error.code + " - " + error.message);
+                        
+                        // Código 1 = permissão negada
+                        if (error.code === 1) {
+                            showStatus("Permissão de localização negada");
+                            locationHelpEl.style.display = "block";
+                        } else if (error.code === 2) {
+                            // Erro de disponibilidade - tente método alternativo
+                            showStatus("Localização indisponível. Tentando alternativa...");
+                            setTimeout(useAlternativeLocation, 1000);
+                        } else {
+                            showStatus("ERRO: " + error.message);
+                            locationHelpEl.style.display = "block";
+                        }
+                    },
+                    options
+                );
+            } catch (e) {
+                logDiagnostic("Exceção: " + e.message);
+                locationBtnEl.disabled = false;
+                locationBtnEl.textContent = "Capturar Localização";
+                showStatus("Erro na geolocalização. Use entrada manual.");
+                toggleManualCoords();
+            }
+            
+            // Tempo máximo para watch (30 segundos)
+            setTimeout(function() {
+                if (watchId !== null) {
+                    logDiagnostic("Timeout da captura de localização");
+                    if (currentLocation) {
+                        // Usamos a melhor localização que conseguimos até agora
+                        stopLocationWatch();
+                        locationBtnEl.disabled = false;
+                        locationBtnEl.textContent = "Capturar Localização";
+                        showStatus("Localização obtida (timeout)! Precisão: " + 
+                                   Math.round(currentLocation.accuracy) + "m");
+                    } else {
+                        stopLocationWatch();
+                        locationBtnEl.disabled = false;
+                        locationBtnEl.textContent = "Capturar Localização";
+                        showStatus("Tempo esgotado. Use entrada manual.");
+                        toggleManualCoords();
+                    }
+                }
+            }, 30000);
+        }
+        
+        // Parar de observar localização
+        function stopLocationWatch() {
+            if (watchId !== null) {
+                navigator.geolocation.clearWatch(watchId);
+                watchId = null;
+                logDiagnostic("Observação de localização interrompida");
+            }
+        }
+        
+        // Alternar modo de entrada manual de coordenadas
+        function toggleManualCoords() {
+            if (manualCoordsEl.style.display === "block") {
+                manualCoordsEl.style.display = "none";
+                manualBtnEl.textContent = "Inserir Coordenadas Manualmente";
+            } else {
+                manualCoordsEl.style.display = "block";
+                manualBtnEl.textContent = "Ocultar Entrada Manual";
+            }
+        }
+        
+        // Salvar coordenadas inseridas manualmente
+        function saveManualCoords() {
+            var lat = parseFloat(latInputEl.value);
+            var lng = parseFloat(lngInputEl.value);
+            
+            if (isNaN(lat) || isNaN(lng)) {
+                showStatus("Digite valores válidos para latitude e longitude");
+                return;
+            }
+            
+            if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+                showStatus("Coordenadas fora dos limites válidos");
+                return;
+            }
+            
+            currentLocation = {
+                latitude: lat,
+                longitude: lng,
+                accuracy: 0, // Precisão desconhecida para coordenadas manuais
+                timestamp: new Date().toISOString()
+            };
+            
+            showStatus("Coordenadas salvas manualmente!");
+            manualCoordsEl.style.display = "none";
+            manualBtnEl.textContent = "Inserir Coordenadas Manualmente";
+        }
+
+        // Salvar dados
+        function saveData() {
+            if (!currentProject) {
+                showStatus("Selecione um projeto primeiro");
+                return;
+            }
+            
+            if (!currentLocation) {
+                showStatus("Capture a localização ou insira manualmente");
+                return;
+            }
+            
+            var notes = notesEl.value.trim();
+            if (!notes) {
+                showStatus("Digite uma observação");
+                return;
+            }
+            
+            try {
+                var newData = {
+                    latitude: currentLocation.latitude,
+                    longitude: currentLocation.longitude,
+                    accuracy: currentLocation.accuracy || 0,
+                    timestamp: currentLocation.timestamp,
+                    observation: notes,
+                    manual: currentLocation.accuracy === 0
+                };
+                
+                projects[currentProject].data.push(newData);
+                window.localStorage.setItem("bioProjects", JSON.stringify(projects));
+                
+                notesEl.value = "";
+                currentLocation = null;
+                showData();
+                showStatus("Dados salvos com sucesso!");
+            } catch (e) {
+                showStatus("ERRO ao salvar dados: " + e.message);
+            }
+        }
+
+        // Mostrar dados
+        function showData() {
+            if (!currentProject) return;
+            
+            dataListEl.innerHTML = "";
+            var data = projects[currentProject].data;
+            
+            if (data.length === 0) {
+                dataListEl.innerHTML = "<p>Nenhum dado coletado</p>";
+                return;
+            }
+            
+            for (var i = 0; i < data.length; i++) {
+                var item = data[i];
+                var date = new Date(item.timestamp);
+                var isManual = item.manual ? " (Manual)" : "";
+                var accuracyText = !item.manual && item.accuracy ? ` | Precisão: ${Math.round(item.accuracy)}m` : "";
+                
+                var div = document.createElement("div");
+                div.className = "item";
+                div.innerHTML = 
+                    "<div class='coords'>Lat: " + item.latitude.toFixed(6) + 
+                    " | Long: " + item.longitude.toFixed(6) + 
+                    accuracyText + isManual + "</div>" +
+                    "<div class='notes'>" + item.observation + "</div>" +
+                    "<div class='coords'>" + date.toLocaleString() + "</div>";
+                
+                dataListEl.appendChild(div);
+            }
+        }
+
+        // Exportar para Excel
+        function exportExcel() {
+            if (!currentProject) {
+                showStatus("Selecione um projeto primeiro");
+                return;
+            }
+            
+            var data = projects[currentProject].data;
+            if (data.length === 0) {
+                showStatus("Nenhum dado para exportar");
+                return;
+            }
+            
+            try {
+                // Verificar se a biblioteca SheetJS está disponível
+                if (typeof XLSX === 'undefined') {
+                    showStatus("Biblioteca XLSX não carregada. Tentando exportar CSV...");
+                    exportCSV();
+                    return;
+                }
+                
+                // Preparar dados para Excel
+                var excelData = [];
+                
+                for (var i = 0; i < data.length; i++) {
+                    var item = data[i];
+                    var date = new Date(item.timestamp);
+                    
+                    excelData.push({
+                        'Data/Hora': date.toLocaleString(),
+                        'Latitude': item.latitude,
+                        'Longitude': item.longitude,
+                        'Precisão (m)': item.accuracy || 0,
+                        'Método': item.manual ? "Manual" : "GPS",
+                        'Observação': item.observation
+                    });
+                }
+                
+                // Criar um workbook
+                var wb = XLSX.utils.book_new();
+                var ws = XLSX.utils.json_to_sheet(excelData);
+                
+                // Adicionar worksheet ao workbook
+                XLSX.utils.book_append_sheet(wb, ws, "Dados");
+                
+                // Gerar arquivo e fazer download
+                var filename = currentProject + "_dados_" + 
+                               new Date().toISOString().split('T')[0] + ".xlsx";
+                
+                XLSX.writeFile(wb, filename);
+                showStatus("Arquivo Excel exportado com sucesso!");
+                
+            } catch (e) {
+                showStatus("ERRO ao exportar Excel: " + e.message + ". Tentando CSV...");
+                logDiagnostic("Erro Excel: " + e.message);
+                // Tentar exportação CSV como fallback
+                setTimeout(exportCSV, 1000);
+            }
+        }
+        
+        // Exportar para CSV (fallback se Excel falhar)
+        function exportCSV() {
+            if (!currentProject) return;
+            
+            var data = projects[currentProject].data;
+            if (data.length === 0) return;
+            
+            try {
+                var csv = "Data/Hora,Latitude,Longitude,Precisão (m),Método,Observação\n";
+                
+                for (var i = 0; i < data.length; i++) {
+                    var item = data[i];
+                    var date = new Date(item.timestamp).toLocaleString();
+                    csv += date + "," + 
+                           item.latitude + "," + 
+                           item.longitude + "," + 
+                           (item.accuracy || 0) + "," + 
+                           (item.manual ? "Manual" : "GPS") + ",\"" + 
+                           item.observation + "\"\n";
+                }
+                
+                var blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+                var link = document.createElement("a");
+                var url = URL.createObjectURL(blob);
+                
+                link.setAttribute("href", url);
+                link.setAttribute("download", currentProject + "_dados.csv");
+                link.style.visibility = "hidden";
+                
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                showStatus("Dados exportados como CSV (fallback)");
+            } catch (e) {
+                showStatus("ERRO na exportação de dados: " + e.message);
+            }
+        }
+
+        // Iniciar após o carregamento
+        window.onload = init;
+    </script>
+</body>
+</html> 
