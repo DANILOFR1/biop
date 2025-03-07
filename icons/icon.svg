@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+    <!-- Círculo de fundo -->
+    <circle cx="256" cy="256" r="256" fill="#4CAF50"/>
+    
+    <!-- Ícone da flor em branco -->
+    <g transform="translate(106,106) scale(1.2)" fill="white">
+        <circle cx="125" cy="125" r="50" stroke="white" stroke-width="20" fill="none"/>
+        <path d="M125,190 C80,190 40,230 40,280 C125,280 125,280 210,280 C210,230 170,190 125,190" stroke="none"/>
+    </g>
+</svg> 
