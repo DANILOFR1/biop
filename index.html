@@ -91,13 +91,13 @@
         }
         .card-header > div {
             display: flex;
-            gap: 30px;
+            gap: 10px;
+            flex-wrap: wrap;
         }
         .export-btn {
-            flex: 1;
             min-width: 120px;
-            margin: 0;
             padding: 8px 15px;
+            margin: 0;
         }
         .section-title {
             font-size: 20px;
@@ -225,6 +225,17 @@
             }
             .card {
                 padding: 15px;
+            }
+            .card-header {
+                flex-direction: column;
+                gap: 10px;
+            }
+            .card-header > div {
+                width: 100%;
+            }
+            .export-btn {
+                flex: 1;
+                min-width: 0;
             }
         }
         .manual-coords {
