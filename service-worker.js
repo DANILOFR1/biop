@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bioplan-v2';
+const CACHE_NAME = 'bioplan-v1.0.2';
 const urlsToCache = [
   './',
   './index.html',
@@ -37,4 +37,20 @@ self.addEventListener('fetch', event => {
           });
       })
   );
+});
+
+// Adicionar evento de ativação
+self.addEventListener('activate', function(event) {
+    event.waitUntil(
+        caches.keys().then(function(cacheNames) {
+            return Promise.all(
+                cacheNames.map(function(cacheName) {
+                    if (cacheName !== CACHE_NAME) {
+                        console.log('Deletando cache antigo:', cacheName);
+                        return caches.delete(cacheName);
+                    }
+                })
+            );
+        })
+    );
 }); 
