@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bioplan-v1';
+const CACHE_NAME = 'bioplan-v2';
 const urlsToCache = [
   './',
   './index.html',
