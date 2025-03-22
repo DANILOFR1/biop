@@ -20,22 +20,6 @@
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./service-worker.js')
                     .then(registration => {
-                        // Forçar atualização do Service Worker
-                        registration.update();
-                        
-                        // Verificar se há nova versão
-                        registration.addEventListener('updatefound', () => {
-                            const newWorker = registration.installing;
-                            newWorker.addEventListener('statechange', () => {
-                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                    // Nova versão disponível
-                                    if (confirm('Nova versão disponível! Deseja atualizar agora?')) {
-                                        window.location.reload();
-                                    }
-                                }
-                            });
-                        });
-                        
                         console.log('Service Worker registrado com sucesso:', registration);
                     })
                     .catch(error => {
@@ -107,16 +91,13 @@
         }
         .card-header > div {
             display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
+            gap: 30px;
         }
         .export-btn {
+            flex: 1;
             min-width: 120px;
-            padding: 8px 15px;
             margin: 0;
-            line-height: 1.2;
-            white-space: normal;
-            height: auto;
+            padding: 8px 15px;
         }
         .section-title {
             font-size: 20px;
@@ -236,25 +217,27 @@
                 flex-direction: column;
             }
             .export-btn {
-                width: 100%;
-                margin: 5px 0;
+                width: auto;
+                min-width: 0;
+                padding: 8px 5px;
+                font-size: 12px;
+                margin: 3px;
+            }
+            .card-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .card-header > div {
+                flex-wrap: wrap;
+                gap: 5px;
+                margin-top: 10px;
+                justify-content: space-between;
             }
             .container {
                 padding: 10px;
             }
             .card {
                 padding: 15px;
-            }
-            .card-header {
-                flex-direction: column;
-                gap: 10px;
-            }
-            .card-header > div {
-                width: 100%;
-            }
-            .export-btn {
-                flex: 1;
-                min-width: 0;
             }
         }
         .manual-coords {
@@ -705,14 +688,19 @@
             background-color: #f8f8f8;
         }
     </style>
-    <meta name="version" content="1.0.2">
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
 </head>
 <body>
     <div class="container">
         <h1>BioPlan</h1>
+        <div style="text-align: center; font-size: 14px; margin-bottom: 15px;">
+            Intelligence in biodiversity collection<br>
+            By Danilo Rangel 
+            <a href="https://www.linkedin.com/in/danilorangelbio/" target="_blank" style="display: inline-block; vertical-align: middle; margin-left: 5px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#0077B5" viewBox="0 0 24 24">
+                    <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                </svg>
+            </a>
+        </div>
         
         <div id="status" class="status"></div>
         
@@ -816,6 +804,7 @@
                     <h4 style="margin: 10px 0;">Importar Espécies</h4>
                     <div class="import-area">
                         <p class="helper-text">Selecione um arquivo Excel (.xlsx, .xls), CSV ou TXT com nomes de espécies (um por linha).</p>
+                        <p class="helper-text" style="color: #0f9d58;"><strong>Nota:</strong> Para listas grandes, aguarde alguns segundos após clicar em importar. O processamento pode levar um momento para ser concluído.</p>
                         <div class="file-input-container">
                             <input type="file" id="importExcel" accept=".xlsx, .xls, .csv, .txt">
                             <button id="importExcelBtn" class="green-btn">Importar Espécies</button>
@@ -836,9 +825,9 @@
             <div class="card-header" onclick="toggleCard('dataCard')">
                 <h3>Dados Coletados</h3>
                 <div>
-                    <button id="exportBtn" class="green-btn export-btn">Exportar<br>Excel</button>
-                    <button id="exportMultipleBtn" class="green-btn export-btn">Exportar<br>Múltiplos</button>
-                    <button class="orange-btn export-btn">Mostrar<br>Ocultar</button>
+                    <button id="exportBtn" class="green-btn export-btn">Exportar Excel</button>
+                    <button id="exportMultipleBtn" class="green-btn export-btn">Exportar Múltiplos</button>
+                    <button class="orange-btn export-btn">Mostrar/Ocultar</button>
                 </div>
             </div>
             <div id="dataCard" class="card-content">
@@ -933,6 +922,12 @@
                 <div style="display: flex; gap: 10px; margin-top: 5px;">
                     <input type="number" id="editLat" placeholder="Latitude" step="0.000001" style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
                     <input type="number" id="editLng" placeholder="Longitude" step="0.000001" style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+                <div style="margin-top: 10px;">
+                    <label style="display: flex; align-items: center; cursor: pointer;">
+                        <input type="checkbox" id="removeLocation" style="margin-right: 8px;">
+                        <span>Remover dados de localização</span>
+                    </label>
                 </div>
             </div>
             
@@ -1542,6 +1537,22 @@
             diagnosticEl.style.display = "block";
             diagnosticEl.scrollTop = diagnosticEl.scrollHeight;
         }
+        
+        // Registrar diagnóstico de importação
+        function logImportDiagnostic(message) {
+            var now = new Date();
+            var timestamp = now.getHours() + ':' + now.getMinutes() + ':' + now.getSeconds();
+            var importDiagnosticEl = document.getElementById('importDiagnostic');
+            
+            // Verificar se o elemento existe antes de tentar modificá-lo
+            if (importDiagnosticEl) {
+                importDiagnosticEl.innerHTML += timestamp + ' - ' + message + '<br>';
+                importDiagnosticEl.style.display = "block";
+                importDiagnosticEl.scrollTop = importDiagnosticEl.scrollHeight;
+            } else {
+                console.log("Diagnóstico de importação: " + timestamp + " - " + message);
+            }
+        }
 
         // Criar projeto
         function createProject() {
@@ -1840,11 +1851,6 @@
                 return;
             }
             
-            if (!currentLocation) {
-                showStatus("Capture a localização ou insira manualmente");
-                return;
-            }
-            
             var species = speciesInputEl.value.trim();
             var abundance = parseInt(abundanceEl.value);
             var notes = notesEl.value.trim();
@@ -1873,15 +1879,38 @@
             }
             
             try {
+                // Usar localização atual ou criar uma localização padrão se não estiver disponível
+                var locationData;
+                if (currentLocation) {
+                    locationData = {
+                        latitude: currentLocation.latitude,
+                        longitude: currentLocation.longitude,
+                        accuracy: currentLocation.accuracy || 0,
+                        timestamp: currentLocation.timestamp,
+                        manual: currentLocation.accuracy === 0
+                    };
+                } else {
+                    // Localização padrão (0,0) com flag para indicar que a localização não foi coletada
+                    locationData = {
+                        latitude: 0,
+                        longitude: 0,
+                        accuracy: 0,
+                        timestamp: new Date().toISOString(),
+                        manual: true,
+                        noLocation: true // Flag para indicar que nenhuma localização foi fornecida
+                    };
+                }
+                
                 var newData = {
                     species: species,
                     abundance: abundance,
-                    latitude: currentLocation.latitude,
-                    longitude: currentLocation.longitude,
-                    accuracy: currentLocation.accuracy || 0,
-                    timestamp: currentLocation.timestamp,
+                    latitude: locationData.latitude,
+                    longitude: locationData.longitude,
+                    accuracy: locationData.accuracy,
+                    timestamp: locationData.timestamp,
                     observation: notes,
-                    manual: currentLocation.accuracy === 0
+                    manual: locationData.manual,
+                    noLocation: locationData.noLocation || false
                 };
                 
                 projects[currentProject].data.push(newData);
@@ -1914,17 +1943,25 @@
             for (var i = 0; i < data.length; i++) {
                 var item = data[i];
                 var date = new Date(item.timestamp);
-                var isManual = item.manual ? " (Manual)" : "";
-                var accuracyText = !item.manual && item.accuracy ? ` | Precisão: ${Math.round(item.accuracy)}m` : "";
+                
+                // Verificar se o registro tem localização
+                var locationInfo;
+                if (item.noLocation) {
+                    locationInfo = "<div class='coords'><em>Sem dados de localização</em></div>";
+                } else {
+                    var isManual = item.manual ? " (Manual)" : "";
+                    var accuracyText = !item.manual && item.accuracy ? ` | Precisão: ${Math.round(item.accuracy)}m` : "";
+                    locationInfo = "<div class='coords'>Lat: " + item.latitude.toFixed(6) + 
+                                  " | Long: " + item.longitude.toFixed(6) + 
+                                  accuracyText + isManual + "</div>";
+                }
                 
                 var div = document.createElement("div");
                 div.className = "item";
                 div.dataset.index = i;
                 div.innerHTML = 
                     "<div class='coords'>Espécie: " + item.species + " | Abundância: " + item.abundance + "</div>" +
-                    "<div class='coords'>Lat: " + item.latitude.toFixed(6) + 
-                    " | Long: " + item.longitude.toFixed(6) + 
-                    accuracyText + isManual + "</div>" +
+                    locationInfo +
                     "<div class='notes'>" + item.observation + "</div>" +
                     "<div class='coords'>" + date.toLocaleString() + "</div>" +
                     "<div class='action-buttons'>" +
@@ -1967,6 +2004,30 @@
             document.getElementById('editLat').value = item.latitude;
             document.getElementById('editLng').value = item.longitude;
             
+            // Configurar checkbox de remoção de localização
+            var removeLocationCheckbox = document.getElementById('removeLocation');
+            if (removeLocationCheckbox) {
+                removeLocationCheckbox.checked = item.noLocation || false;
+                
+                // Desabilitar campos de coordenadas se não houver localização
+                var editLatEl = document.getElementById('editLat');
+                var editLngEl = document.getElementById('editLng');
+                
+                if (item.noLocation) {
+                    editLatEl.disabled = true;
+                    editLngEl.disabled = true;
+                } else {
+                    editLatEl.disabled = false;
+                    editLngEl.disabled = false;
+                }
+                
+                // Adicionar evento para habilitar/desabilitar campos de coordenadas
+                removeLocationCheckbox.onchange = function() {
+                    editLatEl.disabled = this.checked;
+                    editLngEl.disabled = this.checked;
+                };
+            }
+            
             // Armazenar o índice atual para uso posterior
             document.getElementById('editModal').dataset.currentIndex = index;
             
@@ -1985,6 +2046,7 @@
             var newObservation = document.getElementById('editNotes').value.trim();
             var newLat = parseFloat(document.getElementById('editLat').value);
             var newLng = parseFloat(document.getElementById('editLng').value);
+            var removeLocation = document.getElementById('removeLocation') ? document.getElementById('removeLocation').checked : false;
             
             // Validar
             if (!newSpecies) {
@@ -2008,28 +2070,42 @@
                 return;
             }
             
-            if (!newObservation) {
+            if (!newObservation && newObservation !== "") {
                 showStatus("A observação não pode estar vazia");
                 return;
             }
             
-            if (isNaN(newLat) || isNaN(newLng) || newLat < -90 || newLat > 90 || newLng < -180 || newLng > 180) {
-                showStatus("Coordenadas inválidas");
-                return;
+            // Se estiver removendo a localização ou se as coordenadas forem válidas
+            if (removeLocation) {
+                // Remover dados de localização
+                item.noLocation = true;
+                item.latitude = 0;
+                item.longitude = 0;
+                item.accuracy = 0;
+                item.manual = true;
+            } else {
+                // Verificar se as coordenadas são válidas
+                if (isNaN(newLat) || isNaN(newLng) || newLat < -90 || newLat > 90 || newLng < -180 || newLng > 180) {
+                    showStatus("Coordenadas inválidas");
+                    return;
+                }
+                
+                // Atualizar coordenadas
+                item.latitude = newLat;
+                item.longitude = newLng;
+                item.noLocation = false;
+                
+                // Se as coordenadas foram alteradas, marcar como editado manualmente
+                if (newLat !== item.latitude || newLng !== item.longitude) {
+                    item.manual = true;
+                    item.accuracy = 0;
+                }
             }
             
             // Atualizar o item
             item.species = newSpecies;
             item.abundance = newAbundance;
             item.observation = newObservation;
-            item.latitude = newLat;
-            item.longitude = newLng;
-            
-            // Se as coordenadas foram alteradas, marcar como editado manualmente
-            if (newLat !== item.latitude || newLng !== item.longitude) {
-                item.manual = true;
-                item.accuracy = 0;
-            }
             
             // Salvar no localStorage
             window.localStorage.setItem("bioProjects", JSON.stringify(projects));
@@ -2091,10 +2167,10 @@
                         'Data/Hora': date.toLocaleString(),
                         'Espécie': item.species,
                         'Abundância': item.abundance,
-                        'Latitude': item.latitude,
-                        'Longitude': item.longitude,
-                        'Precisão (m)': item.accuracy || 0,
-                        'Método': item.manual ? "Manual" : "GPS",
+                        'Latitude': item.noLocation ? 'N/A' : item.latitude,
+                        'Longitude': item.noLocation ? 'N/A' : item.longitude,
+                        'Precisão (m)': item.noLocation ? 'N/A' : (item.accuracy || 0),
+                        'Método': item.noLocation ? "Sem Localização" : (item.manual ? "Manual" : "GPS"),
                         'Observação': item.observation
                     });
                 }
