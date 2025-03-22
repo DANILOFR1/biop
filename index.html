@@ -217,8 +217,21 @@
                 flex-direction: column;
             }
             .export-btn {
-                width: 100%;
-                margin: 5px 0;
+                width: auto;
+                min-width: 0;
+                padding: 8px 5px;
+                font-size: 12px;
+                margin: 3px;
+            }
+            .card-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .card-header > div {
+                flex-wrap: wrap;
+                gap: 5px;
+                margin-top: 10px;
+                justify-content: space-between;
             }
             .container {
                 padding: 10px;
@@ -791,6 +804,7 @@
                     <h4 style="margin: 10px 0;">Importar Espécies</h4>
                     <div class="import-area">
                         <p class="helper-text">Selecione um arquivo Excel (.xlsx, .xls), CSV ou TXT com nomes de espécies (um por linha).</p>
+                        <p class="helper-text" style="color: #0f9d58;"><strong>Nota:</strong> Para listas grandes, aguarde alguns segundos após clicar em importar. O processamento pode levar um momento para ser concluído.</p>
                         <div class="file-input-container">
                             <input type="file" id="importExcel" accept=".xlsx, .xls, .csv, .txt">
                             <button id="importExcelBtn" class="green-btn">Importar Espécies</button>
@@ -1523,9 +1537,15 @@
             var now = new Date();
             var timestamp = now.getHours() + ':' + now.getMinutes() + ':' + now.getSeconds();
             var importDiagnosticEl = document.getElementById('importDiagnostic');
-            importDiagnosticEl.innerHTML += timestamp + ' - ' + message + '<br>';
-            importDiagnosticEl.style.display = "block";
-            importDiagnosticEl.scrollTop = importDiagnosticEl.scrollHeight;
+            
+            // Verificar se o elemento existe antes de tentar modificá-lo
+            if (importDiagnosticEl) {
+                importDiagnosticEl.innerHTML += timestamp + ' - ' + message + '<br>';
+                importDiagnosticEl.style.display = "block";
+                importDiagnosticEl.scrollTop = importDiagnosticEl.scrollHeight;
+            } else {
+                console.log("Diagnóstico de importação: " + timestamp + " - " + message);
+            }
         }
 
         // Criar projeto
